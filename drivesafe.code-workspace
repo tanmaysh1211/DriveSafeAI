@@ -1,0 +1,7 @@
+{
+  "folders": [
+    { "name": "Frontend",      "path": "frontend"      },
+    { "name": "ML Service",    "path": "ml-service"    },
+    { "name": "OBD Simulator", "path": "obd-simulator" }
+  ]
+}

@@ -1,0 +1,38 @@
+# ── Java / Spring Boot ──────────────────────
+backend/target/
+backend/.idea/
+backend/*.iml
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+
+# ── Python ──────────────────────────────────
+ml-service/venv/
+ml-service/__pycache__/
+ml-service/routes/__pycache__/
+ml-service/training/__pycache__/
+ml-service/maps/output/
+obd-simulator/__pycache__/
+obd-simulator/venv/
+*.pyc
+*.pyo
+
+# ── React / Node ─────────────────────────────
+frontend/node_modules/
+frontend/dist/
+
+# ── Secrets — NEVER commit these ─────────────
+backend/src/main/resources/application.properties
+frontend/.env
+
+# ── ML Models (large binary files) ───────────
+ml-service/models/model.pkl
+ml-service/models/scaler.pkl
+
+# ── Generated data ────────────────────────────
+ml-service/data/synthetic_DF2.csv
+
+# ── OS files ─────────────────────────────────
+.DS_Store
+Thumbs.db
+*.log 

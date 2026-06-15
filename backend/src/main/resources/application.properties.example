@@ -1,0 +1,8 @@
+spring.datasource.url=jdbc:postgresql://localhost:5432/drivesafedb
+spring.datasource.username=YOUR_POSTGRES_USERNAME
+spring.datasource.password=YOUR_POSTGRES_PASSWORD
+jwt.secret=YOUR_BASE64_SECRET_HERE
+openai.api.key=YOUR_OPENAI_KEY_HERE
+openweathermap.api.key=YOUR_OWM_KEY_HERE
+flask.ml.url=http://localhost:5000
+cors.allowed.origin=http://localhost:5173
