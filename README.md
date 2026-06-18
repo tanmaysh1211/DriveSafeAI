@@ -1,26 +1,15 @@
 # 🚗 DriveSafe AI
 
 
-
 >AI-Powered Driving Safety & Insurance Platform
 
-
-
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.5-brightgreen)](https://spring.io/projects/spring-boot)
-
 [![React](https://img.shields.io/badge/React-18-blue)](https://react.dev)
-
 [![Python](https://img.shields.io/badge/Python-3.11-yellow)](https://python.org)
-
 [![LightGBM](https://img.shields.io/badge/ML-LightGBM-orange)](https://lightgbm.readthedocs.io)
-
 [![OpenAI](https://img.shields.io/badge/AI-GPT--4o--mini-purple)](https://platform.openai.com)
-
-
-
+ 
 ---
-
-
 
 ## 📌 What is DriveSafe AI?
 
