@@ -379,10 +379,148 @@ public class TripService {
         return computeFallbackScore(stats);
     }
 
+    public void seedSampleTrips(User user) {
+        // Create 3 sample trips with realistic scores
+        createSampleTrip(user, 32.0,  "Safe",     75.0,  8.5,  "bangalore_koramangala");
+        createSampleTrip(user, 54.0,  "Moderate", 95.0,  14.8, "delhi_connaught_place");
+        createSampleTrip(user, 71.5,  "High",     121.0, 20.5, "bangalore_electronic_city");
+    }
+
+    private void createSampleTrip(User user, double score, String risk,
+                                  double maxSpeed, double distance, String route) {
+        Trip trip = new Trip();
+        trip.setUser(user);
+        trip.setDriveScore(score);
+        trip.setMaxSpeed(maxSpeed);
+        trip.setAvgSpeed(maxSpeed * 0.72);
+        trip.setDistance(distance);
+        trip.setHardBrakingCount((int)(score * 2));
+        trip.setSharpTurnCount((int)(score * 3));
+        trip.setWeatherCondition("Clear Weather");
+        trip.setDaytime(false);
+        trip.setAiRecommendation("Sample trip — upload your own OBD data for real analysis.");
+        trip.setCreatedAt(LocalDateTime.now().minusDays(new Random().nextInt(7)));
+        tripRepository.save(trip);
+    }
+
     // ─────────────────────────────────────────────────────────────────
     // FLASK MAP CALL → Folium HTML map URL
     // POST {flaskMlUrl}/generate-map
     // ─────────────────────────────────────────────────────────────────
+
+    public TripUploadResponse processSimulatedTrip(
+            String email, String profile, String route) throws Exception {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 1. Call Flask /simulate to get OBD rows
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("profile", profile);
+        payload.put("route",   route);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
+
+        ResponseEntity<Map> response = restTemplate.postForEntity(
+                flaskMlUrl + "/simulate", request, Map.class);
+
+        if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
+            throw new RuntimeException("Flask simulation failed");
+        }
+
+        // 2. Convert rows to List<Map<String,String>>
+        List<Map<String, Object>> rawRows =
+                (List<Map<String, Object>>) response.getBody().get("rows");
+
+        List<Map<String, String>> rows = new ArrayList<>();
+        for (Map<String, Object> raw : rawRows) {
+            Map<String, String> converted = new LinkedHashMap<>();
+            for (Map.Entry<String, Object> e : raw.entrySet()) {
+                converted.put(e.getKey(), String.valueOf(e.getValue()));
+            }
+            rows.add(converted);
+        }
+
+        if (rows.isEmpty()) throw new IllegalArgumentException("No rows from simulation");
+
+        // 3. Reuse EXACT same pipeline as processTrip()
+        TelemetryStats stats = extractStats(rows);
+
+        String weather   = "Clear Weather";
+        boolean isDaytime = true;
+        if (stats.startLat != 0 && stats.startLng != 0) {
+            WeatherService.WeatherInfo info =
+                    weatherService.getWeatherAtLocation(stats.startLat, stats.startLng);
+            weather   = info.getCondition();
+            isDaytime = info.isDaytime();
+        }
+
+        double driveScore = callFlaskForScore(stats, weather, isDaytime);
+
+        String mapUrl     = null;
+        String heatmapUrl = null;
+        try {
+            mapUrl     = callFlaskForMap(rows, user.getId());
+            heatmapUrl = callFlaskForHeatmap(rows, user.getId());
+        } catch (Exception e) {
+            log.warn("Map generation skipped: {}", e.getMessage());
+        }
+
+        Trip trip = new Trip();
+        trip.setUser(user);
+        trip.setDriveScore(driveScore);
+        trip.setMaxSpeed(stats.maxSpeed);
+        trip.setAvgSpeed(stats.avgSpeed);
+        trip.setDistance(stats.distanceKm);
+        trip.setMaxAcceleration(stats.maxAcceleration);
+        trip.setHardBrakingCount(stats.hardBrakingCount);
+        trip.setSharpTurnCount(stats.sharpTurnCount);
+        trip.setWeatherCondition(weather);
+        trip.setDaytime(isDaytime);
+        trip.setMapUrl(mapUrl);
+        trip.setHeatmapUrl(heatmapUrl);
+        trip.setCreatedAt(LocalDateTime.now());
+        Trip saved = tripRepository.save(trip);
+
+        String recommendation = "";
+        try {
+            recommendation = aiRecommendationService.generateRecommendation(saved);
+            saved.setAiRecommendation(recommendation);
+            tripRepository.save(saved);
+        } catch (Exception e) {
+            log.warn("AI recommendation skipped: {}", e.getMessage());
+        }
+
+        int pointsEarned = rewardsService.awardPointsForTrip(user.getId(), driveScore);
+
+        String riskLevel = getRiskLevel(driveScore);
+        int newTotal     = rewardsService.getUserPoints(user.getId());
+        notificationService.notifyTripScored(user.getId(), driveScore, riskLevel, pointsEarned);
+        notificationService.notifyPointsEarned(user.getId(), pointsEarned, newTotal);
+        if (driveScore > 65) notificationService.notifyRiskAlert(user.getId(), driveScore);
+
+        return TripUploadResponse.builder()
+                .tripId(saved.getId())
+                .driveScore(driveScore)
+                .riskLevel(riskLevel)
+                .maxSpeed(stats.maxSpeed)
+                .avgSpeed(stats.avgSpeed)
+                .distanceKm(stats.distanceKm)
+                .hardBrakingCount(stats.hardBrakingCount)
+                .sharpTurnCount(stats.sharpTurnCount)
+                .weatherCondition(weather)
+                .isDaytime(isDaytime)
+                .aiRecommendation(recommendation)
+                .mapUrl(mapUrl)
+                .heatmapUrl(heatmapUrl)
+                .pointsEarned(pointsEarned)
+                .message("Simulated trip processed successfully")
+                .build();
+    }
+
+
     private String callFlaskForMap(List<Map<String, String>> rows, Long userId) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("user_id", userId);

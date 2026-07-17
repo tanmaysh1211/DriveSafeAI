@@ -27,6 +27,7 @@ from flask_cors import CORS
 from routes.scoring        import scoring_bp,        load_model
 from routes.maps           import maps_bp
 from routes.recommendations import recommendations_bp
+from routes.simulate import simulate_bp
 
 # ── App factory ───────────────────────────────────────────────────────────────
 
@@ -43,6 +44,7 @@ def create_app() -> Flask:
     ]}})
 
     # ── Register blueprints ───────────────────────────────────────────
+    app.register_blueprint(simulate_bp)
     app.register_blueprint(scoring_bp)
     app.register_blueprint(maps_bp)
     app.register_blueprint(recommendations_bp)

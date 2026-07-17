@@ -4,6 +4,7 @@ import com.drivesafe.dto.AuthResponse;
 import com.drivesafe.dto.LoginRequest;
 import com.drivesafe.dto.RegisterRequest;
 import com.drivesafe.model.User;
+import com.drivesafe.service.TripService;
 import com.drivesafe.repository.UserRepository;
 import com.drivesafe.security.JwtUtil;
 import jakarta.validation.Valid;
@@ -29,6 +30,7 @@ public class AuthController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final TripService tripService;
 
     // POST /api/auth/register
     @PostMapping("/register")
@@ -48,6 +50,8 @@ public class AuthController {
         user.setCreatedAt(LocalDateTime.now());
 
         User saved = userRepository.save(user);
+        // After userRepository.save(newUser):
+        tripService.seedSampleTrips(saved);
 
         String token = jwtUtil.generateToken(saved.getEmail(), saved.getId());
 

@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/trips")
@@ -37,7 +38,7 @@ public class TripController {
 
         String contentType = file.getContentType();
         if (contentType == null || !contentType.contains("csv")) {
-            if (!file.getOriginalFilename().endsWith(".csv")) {
+            if (!Objects.requireNonNull(file.getOriginalFilename()).endsWith(".csv")) {
                 return ResponseEntity
                         .badRequest()
                         .body(Map.of("message", "Only CSV files are accepted"));
@@ -52,6 +53,22 @@ public class TripController {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Failed to process trip: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/simulate")
+    public ResponseEntity<?> simulateTrip(
+            @RequestBody Map<String, String> body,
+            Authentication auth) {
+        try {
+            String profile = body.getOrDefault("profile", "average");
+            String route   = body.getOrDefault("route", "bangalore_electronic_city");
+            TripUploadResponse result = tripService.processSimulatedTrip(
+                    auth.getName(), profile, route);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(Map.of("message", e.getMessage()));
         }
     }
 

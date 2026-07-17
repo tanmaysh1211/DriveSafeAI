@@ -27,12 +27,23 @@ export default function TripHistory() {
   const [inputLimit, setInputLimit] = useState("10");
   const [aiModal,   setAiModal]   = useState(null); // { tripId, text }
   const [uploading, setUploading] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState("average");
   const [uploadMsg, setUploadMsg] = useState("");
   const fileRef = useRef();
 
   useEffect(() => {
     if (user?.userId) fetchTrips(limit);
   }, [user]);
+
+  useEffect(() => {
+  if (!uploadMsg) return;
+
+  const timer = setTimeout(() => {
+    setUploadMsg("");
+  }, 10000);
+
+  return () => clearTimeout(timer);
+}, [uploadMsg]);
 
   const fetchTrips = async (n) => {
     setLoading(true);
@@ -77,6 +88,24 @@ export default function TripHistory() {
     }
   };
 
+  const handleSimulateTrip = async () => {
+  setUploading(true);
+  setUploadMsg("");
+  try {
+    // Call a new backend endpoint that generates + processes a simulated trip
+    const res = await api.post("/trips/simulate", {
+      profile: selectedProfile,  // "safe" | "average" | "aggressive"
+      route: "bangalore_electronic_city"
+    });
+    setUploadMsg(`✓ Trip simulated! Score: ${res.data.driveScore?.toFixed(1)} · ${res.data.riskLevel} · +${res.data.pointsEarned} pts`);
+    fetchTrips(limit);
+  } catch (e) {
+    setUploadMsg("✗ Simulation failed");
+  } finally {
+    setUploading(false);
+  }
+};
+
   const openAiModal = async (trip) => {
     if (trip.aiRecommendation) {
       setAiModal({ tripId: trip.tripId, text: trip.aiRecommendation });
@@ -117,6 +146,30 @@ export default function TripHistory() {
           </span>
         )}
       </div>
+
+     <div style={s.simulateRow}>
+  <div style={s.selectWrapper}>
+  <select
+    value={selectedProfile}
+    onChange={(e) => setSelectedProfile(e.target.value)}
+    style={s.profileSelect}
+  >
+    <option value="safe">🟢 Safe Driver</option>
+    <option value="average">🟡 Average Driver</option>
+    <option value="aggressive">🔴 Aggressive Driver</option>
+  </select>
+
+  <span style={s.selectArrow}>⌄</span>
+</div>
+
+  <button
+    style={s.simulateBtn}
+    onClick={handleSimulateTrip}
+    disabled={uploading}
+  >
+   🚗 Simulate Trip
+  </button>
+</div>
 
       {/* ── Load controls ────────────────────────────────────────── */}
       <div style={s.controls}>
@@ -378,10 +431,12 @@ const s = {
   uploadBar: {
     display: "flex",
     alignItems: "center",
-    gap: 16,
-    marginBottom: 16,
+    gap: 18,
+    // marginBottom: 16,
+    // maxWidth: 1100,
+    // margin: "0 auto 16px",
+    margin: "0 auto 28px",
     maxWidth: 1100,
-    margin: "0 auto 16px",
   },
   uploadBtn: {
     background: "rgba(255,255,255,0.15)",
@@ -398,14 +453,74 @@ const s = {
     fontWeight: 500,
   },
 
+  simulateRow: {
+  display: "flex",
+  alignItems: "center",
+  gap: 18,
+  maxWidth: 1100,
+  margin: "0 auto 24px",
+},
+
+selectWrapper: {
+  position: "relative",
+  width: 200,
+},
+
+profileSelect: {
+  width: "100%",
+  height: 48,
+  appearance: "none",
+  WebkitAppearance: "none",
+  MozAppearance: "none",
+  padding: "0 42px 0 18px",
+  borderRadius: 12,
+  border: "1px solid rgba(255,255,255,.35)",
+  background: "#fff",
+  fontSize: 16,
+  fontWeight: 600,
+  cursor:"pointer",
+},
+
+selectArrow: {
+  position: "absolute",
+  right: 16,      // ← Move this value
+  top: "30%",
+  transform: "translateY(-50%)",
+  pointerEvents: "none",
+  fontSize: 28,
+  color: "#555",
+  cursor: "pointer",
+},
+
+simulateBtn: {
+  height: 48,
+  padding: "0 12px",
+  border: "none",
+  borderRadius: 12,
+  background: "linear-gradient(135deg,#ff6b35,#ff9248)",
+  color: "#fff",
+  fontWeight: 700,
+  fontSize: 15,
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 8,
+  boxShadow: "0 8px 20px rgba(255,107,53,.35)",
+  transition: "all .25s",
+},
+
   // Load controls
   controls: {
     display: "flex",
     alignItems: "center",
-    gap: 12,
-    marginBottom: 24,
-    maxWidth: 1100,
-    margin: "0 auto 24px",
+    // gap: 12,
+    // marginBottom: 24,
+    // maxWidth: 1100,
+    // margin: "0 auto 24px",
+    gap: 18,
+  maxWidth: 1100,
+  margin: "0 auto 30px",
   },
   limitInput: {
     width: 80,
