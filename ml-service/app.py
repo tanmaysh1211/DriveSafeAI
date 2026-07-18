@@ -82,6 +82,9 @@ def create_app() -> Flask:
 
 # ── Startup ───────────────────────────────────────────────────────────────────
 
+# Create the Flask app at module level
+app = create_app()
+
 if __name__ == "__main__":
     # Load LightGBM model into memory once before accepting requests
     load_model()
