@@ -73,8 +73,18 @@ public class SecurityConfig {
 
                         // Public — no token required
                         .requestMatchers(
+                                "/",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                        
                                 "/api/auth/login",
-                                "/api/auth/register"
+                                "/api/auth/register",
+                        
+                                "/actuator/**",
+                        
+                                "/view-map/**",
+                                "/view-heatmap/**"
                         ).permitAll()
 
                         // CORS pre-flight OPTIONS requests must always pass
