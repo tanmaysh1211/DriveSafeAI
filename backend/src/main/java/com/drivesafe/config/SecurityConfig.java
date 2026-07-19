@@ -82,7 +82,7 @@ public class SecurityConfig {
                                 "/api/auth/register",
                         
                                 "/actuator/**",
-                        
+                                "/v3/api-docs/**"
                                 "/view-map/**",
                                 "/view-heatmap/**"
                         ).permitAll()
