@@ -3,24 +3,11 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { login as loginApi } from "../services/authService";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Login.jsx — POST /api/auth/login
-//
-// Matches the screenshot exactly:
-//   - Purple/blue gradient background
-//   - White rounded card centre-screen
-//   - "DriveSafe Login" title in purple
-//   - Email + Password fields
-//   - Green "Sign In to DriveSafe" button
-//   - "Don't have an account? Create one here →" link
-// ─────────────────────────────────────────────────────────────────────────────
-
 export default function Login() {
   const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
   const [error,    setError]    = useState("");
   const [loading,  setLoading]  = useState(false);
-
   const { login } = useAuth();
   const navigate  = useNavigate();
 
@@ -28,7 +15,6 @@ export default function Login() {
     e.preventDefault();
     setError("");
 
-    // Basic client-side validation
     if (!email.trim()) {
       setError("Email is required");
       return;
@@ -41,7 +27,6 @@ export default function Login() {
     setLoading(true);
     try {
       const data = await loginApi({ email: email.trim(), password });
-      // Store token + user in AuthContext
       login(data);
       navigate("/dashboard");
     } catch (err) {
@@ -57,7 +42,6 @@ export default function Login() {
 
   return (
     <div style={styles.root}>
-      {/* Minimal top-left navbar matching screenshot */}
       <nav style={styles.navbar}>
         <div style={styles.navLogo} onClick={() => navigate("/")}>
           <span style={styles.navLogoIcon}>🚗</span>
@@ -70,22 +54,18 @@ export default function Login() {
         </div>
       </nav>
 
-      {/* Centred card */}
       <div style={styles.cardWrapper}>
         <div style={styles.card}>
           {/* Title */}
           <h1 style={styles.title}>DriveSafe Login</h1>
 
-          {/* Error banner */}
           {error && (
             <div style={styles.errorBanner}>
               ⚠️ {error}
             </div>
           )}
 
-          {/* Form */}
           <div style={styles.form}>
-            {/* Email */}
             <div style={styles.field}>
               <label style={styles.label}>Email Address</label>
               <input
@@ -101,7 +81,6 @@ export default function Login() {
               />
             </div>
 
-            {/* Password */}
             <div style={styles.field}>
               <label style={styles.label}>Password</label>
               <input
@@ -118,7 +97,6 @@ export default function Login() {
               />
             </div>
 
-            {/* Submit */}
             <button
               onClick={handleSubmit}
               style={loading ? styles.submitBtnDisabled : styles.submitBtn}
@@ -128,7 +106,6 @@ export default function Login() {
             </button>
           </div>
 
-          {/* Register link */}
           <p style={styles.registerLink}>
             Don't have an account?{" "}
             <Link to="/register" style={styles.link}>
@@ -141,9 +118,6 @@ export default function Login() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STYLES — white card on purple-to-pink gradient (screenshot match)
-// ─────────────────────────────────────────────────────────────────────────────
 const styles = {
   root: {
     minHeight: "100vh",
@@ -153,7 +127,6 @@ const styles = {
     flexDirection: "column",
   },
 
-  // Navbar
   navbar: {
     display: "flex",
     alignItems: "center",
@@ -211,7 +184,6 @@ const styles = {
     fontWeight: 600,
   },
 
-  // Card wrapper
   cardWrapper: {
     flex: 1,
     display: "flex",
@@ -220,7 +192,6 @@ const styles = {
     padding: "40px 16px",
   },
 
-  // White card — matches screenshot
   card: {
     background: "#fff",
     borderRadius: 20,
