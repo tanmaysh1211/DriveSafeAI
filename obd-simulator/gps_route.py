@@ -1,37 +1,10 @@
-"""
-gps_route.py — Predefined GPS routes for Indian cities
-
-Provides realistic GPS waypoint routes for the OBD simulator.
-simulate_trip.py calls get_route() and interpolates between waypoints
-to produce the dense per-second GPS stream DF2.csv needs.
-
-Available routes:
-    bangalore_koramangala_mg_road   —  8.5 km  city drive
-    bangalore_electronic_city       — 18.0 km  highway + city
-    bangalore_hebbal_whitefield     — 32.0 km  outer ring road
-    delhi_connaught_place_noida     — 22.0 km  expressway
-    mumbai_bandra_andheri           — 12.0 km  suburban
-
-Usage:
-    from gps_route import get_route, interpolate_route
-    waypoints   = get_route("bangalore_koramangala_mg_road")
-    dense_track = interpolate_route(waypoints, points_per_segment=40)
-"""
-
 import math
 import random
 from typing import List, Tuple
 
 LatLng = Tuple[float, float]
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# ROUTE DEFINITIONS  — (latitude, longitude) waypoints along real roads
-# ═════════════════════════════════════════════════════════════════════════════
-
 ROUTES = {
-
-    # ── Bangalore: Koramangala → MG Road (≈8.5 km) ───────────────────
     "bangalore_koramangala_mg_road": [
         (12.9352, 77.6245),
         (12.9380, 77.6289),
@@ -46,8 +19,6 @@ ROUTES = {
         (12.9747, 77.6070),
         (12.9762, 77.6036),
     ],
-
-    # ── Bangalore: Koramangala → Electronic City (≈18 km) ────────────
     "bangalore_electronic_city": [
         (12.9352, 77.6245),
         (12.9218, 77.6198),
@@ -60,8 +31,6 @@ ROUTES = {
         (12.8399, 77.6757),
         (12.8344, 77.6801),
     ],
-
-    # ── Bangalore: Hebbal → Whitefield (≈32 km) — ORR ────────────────
     "bangalore_hebbal_whitefield": [
         (13.0358, 77.5970),
         (13.0234, 77.6089),
@@ -73,8 +42,6 @@ ROUTES = {
         (12.9801, 77.7101),
         (12.9834, 77.7289),
     ],
-
-    # ── Delhi: Connaught Place → Noida Sector 18 (≈22 km) ────────────
     "delhi_connaught_place_noida": [
         (28.6315, 77.2167),
         (28.6289, 77.2312),
@@ -88,8 +55,6 @@ ROUTES = {
         (28.5623, 77.3234),
         (28.5534, 77.3312),
     ],
-
-    # ── Mumbai: Bandra → Andheri (≈12 km) ────────────────────────────
     "mumbai_bandra_andheri": [
         (19.0596, 72.8295),
         (19.0634, 72.8312),
@@ -105,16 +70,7 @@ ROUTES = {
 
 DEFAULT_ROUTE = "bangalore_koramangala_mg_road"
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# PUBLIC API
-# ═════════════════════════════════════════════════════════════════════════════
-
 def get_route(name: str = DEFAULT_ROUTE) -> List[LatLng]:
-    """
-    Return waypoints for a named route.
-    Pass name="random" to pick a random route each time.
-    """
     if name == "random":
         name = random.choice(list(ROUTES.keys()))
     if name not in ROUTES:
@@ -126,27 +82,10 @@ def get_route(name: str = DEFAULT_ROUTE) -> List[LatLng]:
 
 
 def list_routes() -> List[str]:
-    """Return names of all available routes."""
     return list(ROUTES.keys())
 
 
-def interpolate_route(waypoints: List[LatLng],
-                      points_per_segment: int = 40) -> List[LatLng]:
-    """
-    Linearly interpolate between waypoints to produce a dense GPS track.
-
-    With points_per_segment=40 and ~10 waypoints you get ~400 rows —
-    enough for a realistic 6–7 minute trip at 1 reading/second.
-
-    Parameters
-    ----------
-    waypoints          : sparse route-shape waypoints
-    points_per_segment : interpolated points between each adjacent pair
-
-    Returns
-    -------
-    Dense list of (lat, lng) tuples
-    """
+def interpolate_route(waypoints: List[LatLng],points_per_segment: int = 40) -> List[LatLng]:
     dense = []
     for i in range(len(waypoints) - 1):
         lat1, lng1 = waypoints[i]
@@ -160,13 +99,7 @@ def interpolate_route(waypoints: List[LatLng],
     dense.append(waypoints[-1])
     return dense
 
-
-def add_gps_noise(points: List[LatLng],
-                  noise_meters: float = 5.0) -> List[LatLng]:
-    """
-    Add Gaussian positional noise to simulate real GPS module jitter.
-    5 m std-dev is typical for a consumer-grade GPS receiver.
-    """
+def add_gps_noise(points: List[LatLng],noise_meters: float = 5.0) -> List[LatLng]:
     noise_deg = noise_meters / 111_320.0   # 1 degree lat ≈ 111,320 m
     return [
         (
@@ -176,9 +109,7 @@ def add_gps_noise(points: List[LatLng],
         for lat, lng in points
     ]
 
-
 def route_distance_km(waypoints: List[LatLng]) -> float:
-    """Estimate total route length in km using Haversine summation."""
     return round(
         sum(
             _haversine_km(
@@ -190,13 +121,7 @@ def route_distance_km(waypoints: List[LatLng]) -> float:
         2,
     )
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# HELPER
-# ═════════════════════════════════════════════════════════════════════════════
-
-def _haversine_km(lat1: float, lng1: float,
-                  lat2: float, lng2: float) -> float:
+def _haversine_km(lat1: float, lng1: float,lat2: float, lng2: float) -> float:
     R = 6371.0
     dlat = math.radians(lat2 - lat1)
     dlng = math.radians(lng2 - lng1)
@@ -206,21 +131,15 @@ def _haversine_km(lat1: float, lng1: float,
          * math.sin(dlng / 2) ** 2)
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# DIAGNOSTIC
-# python gps_route.py
-# ═════════════════════════════════════════════════════════════════════════════
-
 if __name__ == "__main__":
     print("\nAvailable routes:\n")
     for name in list_routes():
         wpts  = get_route(name)
         dist  = route_distance_km(wpts)
         dense = interpolate_route(wpts, points_per_segment=40)
-        print(f"  {name}")
-        print(f"    Waypoints     : {len(wpts)}")
-        print(f"    Distance      : {dist} km")
-        print(f"    Dense rows    : {len(dense)}")
-        print(f"    Start → End   : {wpts[0]} → {wpts[-1]}")
+        print(f"{name}")
+        print(f"Waypoints     : {len(wpts)}")
+        print(f"Distance      : {dist} km")
+        print(f"Dense rows    : {len(dense)}")
+        print(f"Start → End   : {wpts[0]} → {wpts[-1]}")
         print()
