@@ -3,21 +3,9 @@ import { useNavigate }         from "react-router-dom";
 import { useAuth }             from "../context/AuthContext";
 import api                     from "../services/api";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Insurance.jsx — Insurance Policy Overview
-//
-// Matches screenshots exactly:
-//   Top    : "Insurance Policy" heading + "Your comprehensive policy overview" sub
-//   Banner : Green "Policy Status — X days remaining" full-width bar
-//   Row 1  : Policy Information card (left) + Financial Details card (right)
-//   Row 2  : Policy Period card (left)      + Risk Assessment gauge (right)
-//   Bottom : Renew policy button
-// ─────────────────────────────────────────────────────────────────────────────
-
 export default function Insurance() {
   const { user }  = useAuth();
   const navigate  = useNavigate();
-
   const [data,     setData]     = useState(null);
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState("");
@@ -70,7 +58,6 @@ export default function Insurance() {
 
   return (
     <PageShell>
-      {/* ── Page heading ─────────────────────────────────────────── */}
       <div style={s.pageTop}>
         <div>
           <h1 style={s.pageTitle}>Insurance Policy</h1>
@@ -81,7 +68,6 @@ export default function Insurance() {
         </button>
       </div>
 
-      {/* ── Status banner — green / yellow / red ─────────────────── */}
       <div style={{ ...s.statusBanner, background: statusCfg.bg }}>
         <span style={s.statusIcon}>{statusCfg.icon}</span>
         <div>
@@ -94,9 +80,7 @@ export default function Insurance() {
         </div>
       </div>
 
-      {/* ── Row 1: Policy Info + Financial Details ───────────────── */}
       <div style={s.row}>
-        {/* Policy Information */}
         <div style={s.card}>
           <CardHeader icon="📄" iconBg="#ede9fe" title="Policy Information" />
           <InfoRow label="Policy Number" value={data.policyNumber} bold />
@@ -104,7 +88,6 @@ export default function Insurance() {
           <InfoRow label="Coverage Type" value={data.coverageType} bold />
         </div>
 
-        {/* Financial Details */}
         <div style={s.card}>
           <CardHeader icon="💵" iconBg="#d1fae5" title="Financial Details" color="#059669" />
           <InfoRow label="Coverage Amount" value={formatINR(data.coverageAmount)} valueColor="#059669" bold />
@@ -121,9 +104,7 @@ export default function Insurance() {
         </div>
       </div>
 
-      {/* ── Row 2: Policy Period + Risk Assessment ───────────────── */}
       <div style={s.row}>
-        {/* Policy Period */}
         <div style={s.card}>
           <CardHeader icon="📅" iconBg="#ede9fe" title="Policy Period" />
           <InfoRow label="Start Date" value={formatDate(data.startDate)} />
@@ -139,14 +120,11 @@ export default function Insurance() {
               />
             </div>
             <p style={s.periodHint}>
-              {data.daysRemaining > 0
-                ? `${data.daysRemaining} days remaining`
-                : "Expired"}
+              {data.daysRemaining > 0 ? `${data.daysRemaining} days remaining` : "Expired"}
             </p>
           </div>
         </div>
 
-        {/* Risk Assessment — circular gauge */}
         <div style={{ ...s.card, alignItems: "center" }}>
           <CardHeader icon="📈" iconBg="#d1fae5" title="Risk Assessment" color="#059669" />
           <ScoreGauge score={data.driscScore ?? 50} />
@@ -161,7 +139,6 @@ export default function Insurance() {
         </div>
       </div>
 
-      {/* ── Discount breakdown ────────────────────────────────────── */}
       <div style={s.breakdownCard}>
         <h3 style={s.breakdownTitle}>💰 Premium Breakdown</h3>
         <div style={s.breakdownGrid}>
@@ -172,7 +149,6 @@ export default function Insurance() {
         </div>
       </div>
 
-      {/* ── Renew button ──────────────────────────────────────────── */}
       <div style={s.renewSection}>
         {renewMsg && (
           <p style={{
@@ -194,10 +170,6 @@ export default function Insurance() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SCORE GAUGE — circular SVG progress ring
-// Matches the "57.68 / 100" donut chart in the screenshots
-// ─────────────────────────────────────────────────────────────────────────────
 function ScoreGauge({ score }) {
   const radius      = 54;
   const circ        = 2 * Math.PI * radius;
@@ -208,14 +180,12 @@ function ScoreGauge({ score }) {
   return (
     <div style={s.gaugeWrap}>
       <svg width={130} height={130} viewBox="0 0 130 130">
-        {/* Track */}
         <circle
           cx={65} cy={65} r={radius}
           fill="none"
           stroke="#e2e8f0"
           strokeWidth={10}
         />
-        {/* Fill */}
         <circle
           cx={65} cy={65} r={radius}
           fill="none"
@@ -227,7 +197,6 @@ function ScoreGauge({ score }) {
           transform="rotate(-90 65 65)"
           style={{ transition: "stroke-dashoffset 0.8s ease" }}
         />
-        {/* Score text */}
         <text x={65} y={60} textAnchor="middle"
           fontSize={22} fontWeight={800} fill="#1a202c">
           {score?.toFixed(2) ?? "—"}
@@ -240,10 +209,6 @@ function ScoreGauge({ score }) {
     </div>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SMALL COMPONENTS
-// ─────────────────────────────────────────────────────────────────────────────
 
 function PageShell({ children }) {
   return (
@@ -300,10 +265,6 @@ function ErrorState({ msg }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-
 function formatINR(amount) {
   if (amount == null) return "—";
   return new Intl.NumberFormat("en-IN", {
@@ -318,10 +279,6 @@ function formatDate(dateStr) {
   });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DATA
-// ─────────────────────────────────────────────────────────────────────────────
-
 const STATUS_CFG = {
   ACTIVE:        { icon: "📅", bg: "linear-gradient(135deg,#38a169,#276749)", barColor: "#38a169" },
   EXPIRING_SOON: { icon: "⚠️", bg: "linear-gradient(135deg,#d69e2e,#b7791f)", barColor: "#d69e2e" },
@@ -334,9 +291,6 @@ const RISK_LABEL_COLORS = {
   "High Risk":       "#e53e3e",
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STYLES
-// ─────────────────────────────────────────────────────────────────────────────
 const s = {
   root: {
     minHeight: "100vh",
@@ -367,7 +321,6 @@ const s = {
     cursor: "pointer", fontWeight: 500,
   },
 
-  // Status banner
   statusBanner: {
     borderRadius: 14,
     padding: "22px 28px",
@@ -380,7 +333,6 @@ const s = {
   statusTitle: { fontSize: 18, fontWeight: 800, margin: 0 },
   statusSub:   { fontSize: 14, opacity: 0.85, margin: "2px 0 0" },
 
-  // Cards
   row: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
@@ -410,7 +362,6 @@ const s = {
   },
   cardTitle: { fontSize: 17, fontWeight: 700, margin: 0 },
 
-  // Info rows
   infoRow: {
     display: "flex",
     flexDirection: "column",
@@ -420,7 +371,6 @@ const s = {
   infoLabel: { fontSize: 12, color: "#a0aec0", textTransform: "uppercase", letterSpacing: "0.4px" },
   infoValue: { fontSize: 16, color: "#1a202c" },
 
-  // Financial
   finalPremiumRow: {
     display: "flex",
     justifyContent: "space-between",
@@ -443,7 +393,6 @@ const s = {
     fontWeight: 500,
   },
 
-  // Period bar
   periodBar: {
     height: 8,
     background: "#e2e8f0",
@@ -458,7 +407,6 @@ const s = {
   },
   periodHint: { fontSize: 12, color: "#718096", margin: 0 },
 
-  // Score gauge
   gaugeWrap: { margin: "12px 0 4px" },
   driscLabel: { fontSize: 13, color: "#718096", margin: "2px 0 8px", textAlign: "center" },
   riskLabelBadge: {
@@ -471,7 +419,6 @@ const s = {
     textAlign: "center", lineHeight: 1.5, margin: 0,
   },
 
-  // Breakdown
   breakdownCard: {
     background: "#fff",
     borderRadius: 16,
@@ -499,7 +446,6 @@ const s = {
   breakdownLabel: { fontSize: 12, color: "#718096", fontWeight: 500 },
   breakdownValue: { fontSize: 20, fontWeight: 800 },
 
-  // Renew
   renewSection: { textAlign: "center", paddingBottom: 8 },
   renewMsg:     { fontSize: 14, fontWeight: 500, marginBottom: 12 },
   renewBtn: {
@@ -518,7 +464,6 @@ const s = {
     cursor: "not-allowed",
   },
 
-  // Loading / error
   center: {
     display: "flex", flexDirection: "column",
     alignItems: "center", justifyContent: "center",
