@@ -1,26 +1,3 @@
-"""
-train_model.py — DriveSafe AI LightGBM model training pipeline
-
-Trains a LightGBM regressor to predict DriveScore (0–100) from trip telemetry.
-Saves model.pkl and scaler.pkl to ml-service/models/ for use by scoring.py.
-
-Usage:
-    cd ml-service
-    source venv/bin/activate
-    python training/train_model.py
-
-    # With a specific CSV:
-    python training/train_model.py --csv data/DF2.csv
-
-    # With more trees for better accuracy:
-    python training/train_model.py --n-estimators 500
-
-Output:
-    models/model.pkl    — trained LightGBM model
-    models/scaler.pkl   — fitted StandardScaler
-    training/plots/     — feature importance + predicted vs actual charts
-"""
-
 import os
 import sys
 import argparse
@@ -31,8 +8,6 @@ import pandas as pd
 
 warnings.filterwarnings("ignore")
 
-# ── Path setup ────────────────────────────────────────────────────────────────
-# Add ml-service/ to sys.path so we can import feature_engineering.py
 _ML_SERVICE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, _ML_SERVICE_DIR)
 
@@ -42,7 +17,6 @@ from training.feature_engineering import (
     LABEL_COLUMN,
 )
 
-# ── Output paths ──────────────────────────────────────────────────────────────
 MODELS_DIR = os.path.join(_ML_SERVICE_DIR, "models")
 PLOTS_DIR  = os.path.join(os.path.dirname(__file__), "plots")
 os.makedirs(MODELS_DIR, exist_ok=True)
@@ -50,11 +24,6 @@ os.makedirs(PLOTS_DIR,  exist_ok=True)
 
 MODEL_PATH  = os.path.join(MODELS_DIR, "model.pkl")
 SCALER_PATH = os.path.join(MODELS_DIR, "scaler.pkl")
-
-
-# ═════════════════════════════════════════════════════════════════════════════
-# ARGUMENT PARSING
-# ═════════════════════════════════════════════════════════════════════════════
 
 def parse_args():
     p = argparse.ArgumentParser(description="Train DriveSafe AI LightGBM model")
@@ -77,16 +46,7 @@ def parse_args():
                    help="Use synthetic data instead of a real CSV")
     return p.parse_args()
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# DATA LOADING
-# ═════════════════════════════════════════════════════════════════════════════
-
 def load_data(csv_path: str, use_synthetic: bool) -> pd.DataFrame:
-    """
-    Load and validate the raw OBD CSV.
-    Falls back to synthetic data if --synthetic flag or CSV not found.
-    """
     if use_synthetic or not os.path.exists(csv_path):
         if not use_synthetic:
             print(f"[data] CSV not found at: {csv_path}")
@@ -98,16 +58,7 @@ def load_data(csv_path: str, use_synthetic: bool) -> pd.DataFrame:
     print(f"[data] Raw shape: {df.shape} — columns: {list(df.columns)}")
     return df
 
-
 def _generate_synthetic_csv() -> pd.DataFrame:
-    """
-    Generate a realistic multi-trip synthetic CSV.
-
-    Simulates 3 driver profiles:
-        - Safe driver    (30% of trips): smooth, moderate speed
-        - Average driver (50% of trips): occasional hard braking
-        - Aggressive     (20% of trips): high speed, frequent braking
-    """
     np.random.seed(42)
     rows = []
     trip_id = 1
@@ -116,7 +67,6 @@ def _generate_synthetic_csv() -> pd.DataFrame:
 
     for profile, count in n_trips.items():
         for _ in range(count):
-            n_rows = np.random.randint(80, 300)  # rows per trip
 
             if profile == "safe":
                 speed_mean, speed_std     = 55,  15
@@ -128,13 +78,12 @@ def _generate_synthetic_csv() -> pd.DataFrame:
                 accel_std                 = 1.5
                 rpm_mean                  = 2500
                 is_daytime                = 1 if np.random.random() > 0.25 else 0
-            else:  # aggressive
+            else:  
                 speed_mean, speed_std     = 100, 35
                 accel_std                 = 3.0
                 rpm_mean                  = 3500
                 is_daytime                = 1 if np.random.random() > 0.35 else 0
 
-            # GPS: random start near Bangalore
             start_lat = np.random.uniform(12.85, 13.10)
             start_lng = np.random.uniform(77.50, 77.75)
 
@@ -145,14 +94,11 @@ def _generate_synthetic_csv() -> pd.DataFrame:
             rpm   = np.clip(np.random.normal(rpm_mean, 500, n_rows), 600, 6000)
             eng_t = np.random.uniform(85, 100, n_rows)
 
-            # Inject occasional hard braking events for aggressive driver
             if profile == "aggressive":
                 brake_idx = np.random.choice(n_rows, size=max(1, n_rows//20), replace=False)
                 accel[brake_idx] = np.random.uniform(-5, -3, len(brake_idx))
 
-            # Determine weather randomly
-            weather_choices = ["clear weather", "clear weather", "clear weather",
-                               "cloudy", "rainy", "foggy"]
+            weather_choices = ["clear weather", "clear weather", "clear weather","cloudy", "rainy", "foggy"]
             weather = np.random.choice(weather_choices)
 
             for j in range(n_rows):
@@ -174,27 +120,13 @@ def _generate_synthetic_csv() -> pd.DataFrame:
     df = pd.DataFrame(rows)
     print(f"[data] Synthetic: {len(df)} rows across {trip_id-1} trips")
 
-    # Optionally save for inspection
     out_path = os.path.join(_ML_SERVICE_DIR, "data", "synthetic_DF2.csv")
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     df.to_csv(out_path, index=False)
     print(f"[data] Saved synthetic CSV → {out_path}")
     return df
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# PREPROCESSING
-# ═════════════════════════════════════════════════════════════════════════════
-
 def preprocess(dataset: pd.DataFrame, test_size: float):
-    """
-    Split into train/test and apply StandardScaler.
-
-    Returns
-    -------
-    X_train, X_test, y_train, y_test : numpy arrays
-    scaler                            : fitted StandardScaler
-    """
     from sklearn.model_selection import train_test_split
     from sklearn.preprocessing   import StandardScaler
 
@@ -212,35 +144,15 @@ def preprocess(dataset: pd.DataFrame, test_size: float):
         shuffle=True,
     )
 
-    # Fit scaler on training data only — never fit on test data
     scaler  = StandardScaler()
     X_train = scaler.fit_transform(X_train)
     X_test  = scaler.transform(X_test)
 
-    print(f"[preprocess] Train: {X_train.shape[0]} rows  |  "
-          f"Test: {X_test.shape[0]} rows")
+    print(f"[preprocess] Train: {X_train.shape[0]} rows  |  "f"Test: {X_test.shape[0]} rows")
 
     return X_train, X_test, y_train, y_test, scaler
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# MODEL TRAINING
-# ═════════════════════════════════════════════════════════════════════════════
-
-def train(X_train, y_train,
-          n_estimators:  int   = 300,
-          max_depth:     int   = 6,
-          learning_rate: float = 0.05):
-    """
-    Train a LightGBM regressor.
-
-    Hyperparameters tuned for DriveScore regression:
-        num_leaves     : controls model complexity (lower = less overfit)
-        min_child_samples: prevents overfitting on small trips
-        subsample      : row sampling for robustness
-        colsample_bytree: feature sampling per tree
-        reg_alpha/lambda: L1/L2 regularisation
-    """
+def train(X_train, y_train,n_estimators:  int   = 300,max_depth:     int   = 6,learning_rate: float = 0.05):
     try:
         import lightgbm as lgb
     except ImportError:
@@ -261,31 +173,19 @@ def train(X_train, y_train,
         subsample         = 0.8,
         subsample_freq    = 1,
         colsample_bytree  = 0.8,
-        reg_alpha         = 0.1,    # L1
-        reg_lambda        = 0.1,    # L2
+        reg_alpha         = 0.1,    
+        reg_lambda        = 0.1,    
         n_jobs            = -1,
         random_state      = 42,
         verbose           = -1,
     )
 
-    model.fit(
-        X_train, y_train,
-        # eval_set and callbacks removed for simplicity —
-        # add early_stopping(50) here if you have a val set
-    )
+    model.fit(X_train, y_train,)
 
     print("[train] Training complete")
     return model
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# EVALUATION
-# ═════════════════════════════════════════════════════════════════════════════
-
 def evaluate(model, scaler, X_test, y_test, X_train, y_train):
-    """
-    Print regression metrics and run 5-fold cross-validation.
-    """
     from sklearn.metrics import (
         mean_absolute_error,
         mean_squared_error,
@@ -293,7 +193,6 @@ def evaluate(model, scaler, X_test, y_test, X_train, y_train):
     )
     from sklearn.model_selection import cross_val_score
 
-    # Test set metrics
     y_pred = model.predict(X_test)
     y_pred = np.clip(y_pred, 0, 100)
 
@@ -309,39 +208,27 @@ def evaluate(model, scaler, X_test, y_test, X_train, y_train):
     print(f"  R²   (variance explained)    : {r2:.4f}")
     print(f"{'─'*50}")
 
-    # Accuracy within ±5 points
     within_5  = np.mean(np.abs(y_test - y_pred) <= 5)  * 100
     within_10 = np.mean(np.abs(y_test - y_pred) <= 10) * 100
     print(f"  Within ±5  pts               : {within_5:.1f}%")
     print(f"  Within ±10 pts               : {within_10:.1f}%")
     print(f"{'─'*50}")
 
-    # Risk label accuracy (Safe/Moderate/High)
     def label(s): return "Safe" if s<=40 else "Moderate" if s<=65 else "High"
     true_labels = [label(s) for s in y_test]
     pred_labels = [label(s) for s in y_pred]
     label_acc = np.mean([t == p for t, p in zip(true_labels, pred_labels)]) * 100
-    print(f"  Risk label accuracy          : {label_acc:.1f}%")
+    print(f"  Risk label accuracy  : {label_acc:.1f}%")
     print(f"{'─'*50}\n")
 
-    # 5-fold CV on training data
     print("[eval] Running 5-fold cross-validation on training data...")
-    cv_scores = cross_val_score(
-        model, X_train, y_train,
-        cv=5, scoring="r2", n_jobs=-1
-    )
-    print(f"  CV R² scores : {[round(s, 3) for s in cv_scores]}")
-    print(f"  CV R² mean   : {cv_scores.mean():.4f} (±{cv_scores.std():.4f})\n")
+    cv_scores = cross_val_score( model, X_train, y_train,cv=5, scoring="r2", n_jobs=-1)
+    print(f"CV R² scores : {[round(s, 3) for s in cv_scores]}")
+    print(f"CV R² mean   : {cv_scores.mean():.4f} (±{cv_scores.std():.4f})\n")
 
     return y_pred
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# FEATURE IMPORTANCE ANALYSIS
-# ═════════════════════════════════════════════════════════════════════════════
-
 def print_feature_importance(model):
-    """Print feature importances sorted by gain."""
     importances = model.feature_importances_
     pairs = sorted(
         zip(FEATURE_COLUMNS, importances),
@@ -354,27 +241,19 @@ def print_feature_importance(model):
         print(f"  {name:<22} {imp:6.0f}  {bar}")
     print()
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# EVALUATION PLOTS (optional — skipped if matplotlib not installed)
-# ═════════════════════════════════════════════════════════════════════════════
-
 def save_plots(model, y_test, y_pred, no_plots: bool):
     if no_plots:
         return
 
     try:
         import matplotlib
-        matplotlib.use("Agg")   # non-interactive backend — safe in headless envs
+        matplotlib.use("Agg")   
         import matplotlib.pyplot as plt
 
-        # ── Feature importance bar chart ─────────────────────────────
         fig, ax = plt.subplots(figsize=(10, 6))
         importances = model.feature_importances_
         idx = np.argsort(importances)[::-1]
-        ax.barh([FEATURE_COLUMNS[i] for i in idx[::-1]],
-                [importances[i] for i in idx[::-1]],
-                color="#6c63ff")
+        ax.barh([FEATURE_COLUMNS[i] for i in idx[::-1]],[importances[i] for i in idx[::-1]],color="#6c63ff")
         ax.set_xlabel("Feature Importance (gain)")
         ax.set_title("DriveSafe AI — LightGBM Feature Importance")
         ax.invert_yaxis()
@@ -384,7 +263,6 @@ def save_plots(model, y_test, y_pred, no_plots: bool):
         plt.close()
         print(f"[plots] Feature importance chart → {path}")
 
-        # ── Predicted vs Actual scatter ──────────────────────────────
         fig, ax = plt.subplots(figsize=(8, 8))
         ax.scatter(y_test, y_pred, alpha=0.4, c="#6c63ff", edgecolors="none", s=20)
         ax.plot([0, 100], [0, 100], "r--", linewidth=1.5, label="Perfect prediction")
@@ -401,16 +279,9 @@ def save_plots(model, y_test, y_pred, no_plots: bool):
         print(f"[plots] Predicted vs actual chart → {path}")
 
     except ImportError:
-        print("[plots] matplotlib not installed — skipping charts. "
-              "Run: pip install matplotlib")
-
-
-# ═════════════════════════════════════════════════════════════════════════════
-# SAVE MODEL AND SCALER
-# ═════════════════════════════════════════════════════════════════════════════
+        print("[plots] matplotlib not installed — skipping charts. ""Run: pip install matplotlib")
 
 def save_artifacts(model, scaler):
-    """Serialize model and scaler to disk with pickle."""
     with open(MODEL_PATH, "wb") as f:
         pickle.dump(model, f)
     print(f"[save] model.pkl  → {MODEL_PATH}")
@@ -419,11 +290,6 @@ def save_artifacts(model, scaler):
         pickle.dump(scaler, f)
     print(f"[save] scaler.pkl → {SCALER_PATH}")
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# MAIN
-# ═════════════════════════════════════════════════════════════════════════════
-
 def main():
     args = parse_args()
 
@@ -431,10 +297,8 @@ def main():
     print("  DriveSafe AI — LightGBM Training Pipeline")
     print("═" * 60)
 
-    # 1. Load raw OBD data
     raw_df = load_data(args.csv, args.synthetic)
 
-    # 2. Feature engineering — one row per trip
     print("\n[feature_engineering] Building trip-level feature dataset...")
     dataset = build_training_dataset(raw_df)
     print(f"[feature_engineering] Final dataset: {dataset.shape}")
@@ -444,12 +308,10 @@ def main():
               "Use --synthetic to generate training data.")
         sys.exit(1)
 
-    # 3. Train/test split + scaling
     X_train, X_test, y_train, y_test, scaler = preprocess(
         dataset, args.test_size
     )
 
-    # 4. Train LightGBM
     model = train(
         X_train, y_train,
         n_estimators  = args.n_estimators,
@@ -457,16 +319,12 @@ def main():
         learning_rate = args.learning_rate,
     )
 
-    # 5. Evaluate
     y_pred = evaluate(model, scaler, X_test, y_test, X_train, y_train)
 
-    # 6. Feature importance
     print_feature_importance(model)
 
-    # 7. Save plots
     save_plots(model, y_test, y_pred, args.no_plots)
 
-    # 8. Save artifacts — model.pkl and scaler.pkl
     save_artifacts(model, scaler)
 
     print("\n" + "═" * 60)
