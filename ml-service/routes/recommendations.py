@@ -1,62 +1,14 @@
-"""
-recommendations.py — Flask blueprint for AI-powered trip recommendations
-
-POST /recommend
-    Input  : trip telemetry JSON (same shape as /predict)
-    Output : { "recommendation": "Your max speed of 109 km/h..." }
-
-This is a THIN wrapper around the OpenAI API.
-In the DriveSafe AI architecture, Spring Boot's AIRecommendationService.java
-is the primary caller of OpenAI — this Flask endpoint exists as an alternative
-if you want the ML service to own all AI calls in one place.
-
-You can call either:
-  Option A (recommended): Spring Boot → OpenAI directly
-  Option B:               Spring Boot → POST /recommend → OpenAI
-
-Switch between them by toggling use_flask_recommendations=true
-in application.properties.
-"""
-
 import os
 from flask import Blueprint, request, jsonify
 
 recommendations_bp = Blueprint("recommendations", __name__)
 
-# OpenAI API key — read from environment variable set in .env / shell
-# Never hardcode this — it will end up in Git
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 OPENAI_URL     = "https://api.openai.com/v1/chat/completions"
-MODEL          = "gpt-4o-mini"   # cheapest capable model (~$0.15/1M tokens)
-
-
-# ── POST /recommend ───────────────────────────────────────────────────────────
+MODEL          = "gpt-4o-mini"   
 
 @recommendations_bp.route("/recommend", methods=["POST"])
 def recommend():
-    """
-    Generate an AI driving recommendation for a completed trip.
-
-    Request JSON (from TripService or AIRecommendationService):
-    {
-        "drive_score":       57.75,
-        "max_speed":         109.0,
-        "avg_speed":         72.4,
-        "hard_braking_count": 3,
-        "sharp_turn_count":   2,
-        "distance_km":        23.0,
-        "is_daytime":         1,
-        "weather":            "Clear Weather",
-        "max_acceleration":   0.42
-    }
-
-    Response:
-    {
-        "recommendation": "Your max speed of 109 km/h exceeded safe limits...\n
-                           You had 3 hard braking events...\n
-                           Consider smoother deceleration..."
-    }
-    """
     if not OPENAI_API_KEY:
         return jsonify({
             "recommendation": _fallback_recommendation(),
@@ -77,15 +29,7 @@ def recommend():
         "model": MODEL,
     })
 
-
-# ── Prompt builder ────────────────────────────────────────────────────────────
-
 def _build_prompt(data: dict) -> str:
-    """
-    Build the GPT prompt from trip data.
-    Injects actual numbers so recommendations are trip-specific, not generic.
-    Matches the prompt structure in Java's AIRecommendationService.buildPrompt().
-    """
     drive_score  = float(data.get("drive_score",       50))
     max_speed    = float(data.get("max_speed",          0))
     avg_speed    = float(data.get("avg_speed",          0))
@@ -122,14 +66,7 @@ INSTRUCTIONS:
 - Do NOT use markdown, bullet symbols, or headers — plain text only
 - Separate each recommendation with a newline"""
 
-
-# ── OpenAI call ───────────────────────────────────────────────────────────────
-
 def _call_openai(prompt: str) -> str:
-    """
-    POST to OpenAI chat completions endpoint.
-    Returns the recommendation text or a fallback string on error.
-    """
     try:
         import requests as req
 
@@ -170,7 +107,6 @@ def _call_openai(prompt: str) -> str:
 
 
 def _extract_content(data: dict) -> str:
-    """Parse the text content from OpenAI's response JSON."""
     try:
         choices = data.get("choices", [])
         if choices:
@@ -182,29 +118,15 @@ def _extract_content(data: dict) -> str:
         print(f"[recommendations] Failed to parse OpenAI response: {e}")
     return _fallback_recommendation()
 
-
-# ── Fallback ──────────────────────────────────────────────────────────────────
-
 def _fallback_recommendation() -> str:
-    """
-    Plain-text fallback shown when OpenAI is unreachable.
-    Matches the fallback in Java's AIRecommendationService.buildFallbackRecommendation().
-    """
     return (
         "Try to maintain a steady speed and avoid sudden acceleration or braking.\n"
         "Keep a safe following distance so you have time to brake gradually.\n"
         "Stay aware of road conditions and reduce speed in poor weather or at night."
     )
 
-
-# ── GET /recommend/health ─────────────────────────────────────────────────────
-
 @recommendations_bp.route("/recommend/health", methods=["GET"])
 def health():
-    """
-    Quick health check — confirms OpenAI key is configured.
-    Useful for debugging without making an actual API call.
-    """
     key_set = bool(OPENAI_API_KEY)
     return jsonify({
         "status":       "ok",
