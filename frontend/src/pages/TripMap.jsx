@@ -2,31 +2,14 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../services/api";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TripMap.jsx — Detailed map analysis for a single trip
-//
-// Matches screenshots:
-//   - Full-screen Folium HTML map inside an <iframe>
-//   - Toggle between Route Map and Heatmap
-//   - Trip stats sidebar (total points, avg risk, max risk, high risk events)
-//   - Legend: High/Medium/Low risk colour codes
-//   - Back button to Trip History
-//
-// Architecture:
-//   Flask generates the Folium HTML and returns a URL.
-//   React embeds that URL in an <iframe> — no Leaflet.js npm package needed.
-//   This is exactly how your hackathon screenshots work.
-// ─────────────────────────────────────────────────────────────────────────────
-
 export default function TripMap() {
   const { tripId }  = useParams();
   const navigate    = useNavigate();
-
   const [trip,     setTrip]     = useState(null);
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState("");
-  const [mapType,  setMapType]  = useState("route");   // "route" | "heatmap"
-  const [iframeKey, setIframeKey] = useState(0);        // force iframe refresh
+  const [mapType,  setMapType]  = useState("route");  
+  const [iframeKey, setIframeKey] = useState(0);        
 
   useEffect(() => {
     loadTrip();
@@ -45,11 +28,7 @@ export default function TripMap() {
     }
   };
 
-  // Determine which URL to show in iframe
-  const mapUrl = mapType === "route"
-    ? trip?.mapUrl
-    : trip?.heatmapUrl ?? trip?.mapUrl;
-
+  const mapUrl = mapType === "route" ? trip?.mapUrl : trip?.heatmapUrl ?? trip?.mapUrl;
   const riskColor = RISK_COLORS[trip?.riskLevel] ?? "#e53e3e";
 
   if (loading) return <Shell><Spinner /></Shell>;
@@ -58,7 +37,6 @@ export default function TripMap() {
 
   return (
     <Shell>
-      {/* ── Header bar ──────────────────────────────────────────── */}
       <div style={s.header}>
         <button style={s.backBtn} onClick={() => navigate("/trips")}>
           ← Back to Trips
@@ -69,7 +47,6 @@ export default function TripMap() {
           <RiskBadge level={trip.riskLevel} color={riskColor} />
         </div>
 
-        {/* Map type toggle */}
         <div style={s.toggle}>
           <button
             style={mapType === "route" ? s.toggleActive : s.toggleBtn}
@@ -86,9 +63,7 @@ export default function TripMap() {
         </div>
       </div>
 
-      {/* ── Main content: iframe + sidebar ──────────────────────── */}
       <div style={s.body}>
-        {/* Iframe — Folium HTML map */}
         <div style={s.mapContainer}>
           {mapUrl ? (
             <iframe
@@ -103,9 +78,7 @@ export default function TripMap() {
           )}
         </div>
 
-        {/* Sidebar */}
         <div style={s.sidebar}>
-          {/* Trip Stats card */}
           <div style={s.sideCard}>
             <h3 style={s.sideCardTitle}>📊 Trip Statistics</h3>
             <StatRow
@@ -146,7 +119,6 @@ export default function TripMap() {
             />
           </div>
 
-          {/* Conditions card */}
           <div style={s.sideCard}>
             <h3 style={s.sideCardTitle}>🌤️ Conditions</h3>
             <div style={s.condPills}>
@@ -160,7 +132,6 @@ export default function TripMap() {
             </div>
           </div>
 
-          {/* Risk Legend card — matches screenshot */}
           <div style={s.sideCard}>
             <h3 style={s.sideCardTitle}>🚗 DriveSafe AI Risk Levels</h3>
             <LegendRow color="#e74c3c" label="High Risk (6–10)" />
@@ -171,7 +142,6 @@ export default function TripMap() {
             <LegendRow color="#2c3e50" label="■ Trip End"   shape="square"   />
           </div>
 
-          {/* AI Recommendation card */}
           {trip.aiRecommendation && (
             <div style={{ ...s.sideCard, background: "#f0fff4", borderColor: "#9ae6b4" }}>
               <h3 style={{ ...s.sideCardTitle, color: "#276749" }}>
@@ -187,10 +157,6 @@ export default function TripMap() {
     </Shell>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SUB-COMPONENTS
-// ─────────────────────────────────────────────────────────────────────────────
 
 function Shell({ children }) {
   return (
@@ -266,19 +232,12 @@ function ErrorBanner({ msg, onBack }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DATA
-// ─────────────────────────────────────────────────────────────────────────────
-
 const RISK_COLORS = {
   Safe:     "#38a169",
   Moderate: "#d69e2e",
   High:     "#e53e3e",
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STYLES
-// ─────────────────────────────────────────────────────────────────────────────
 const s = {
   root: {
     height: "100vh",
@@ -289,7 +248,6 @@ const s = {
     overflow: "hidden",
   },
 
-  // Header bar
   header: {
     display: "flex",
     alignItems: "center",
@@ -329,7 +287,6 @@ const s = {
     fontWeight: 700,
   },
 
-  // Toggle buttons
   toggle: {
     display: "flex",
     background: "#f7fafc",
@@ -360,14 +317,12 @@ const s = {
     boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
   },
 
-  // Body layout
   body: {
     flex: 1,
     display: "flex",
     overflow: "hidden",
   },
 
-  // Iframe map
   mapContainer: {
     flex: 1,
     position: "relative",
@@ -380,7 +335,6 @@ const s = {
     display: "block",
   },
 
-  // Sidebar
   sidebar: {
     width: 300,
     flexShrink: 0,
@@ -407,7 +361,6 @@ const s = {
     margin: "0 0 14px",
   },
 
-  // Stat rows
   statRow: {
     display: "flex",
     alignItems: "center",
@@ -419,7 +372,6 @@ const s = {
   statLabel: { flex: 1, fontSize: 13, color: "#718096" },
   statValue: { fontSize: 13, fontWeight: 600, color: "#2d3748" },
 
-  // Condition pills
   condPills: { display: "flex", flexWrap: "wrap", gap: 8 },
   condPill: {
     borderRadius: 99,
@@ -429,7 +381,6 @@ const s = {
     fontWeight: 500,
   },
 
-  // Legend
   legendRow: {
     display: "flex",
     alignItems: "center",
@@ -440,7 +391,6 @@ const s = {
   legendLabel:   { fontSize: 13, color: "#4a5568" },
   legendDivider: { height: 1, background: "#e2e8f0", margin: "8px 0" },
 
-  // AI recommendation
   aiLine: {
     fontSize: 13,
     color: "#276749",
@@ -448,7 +398,6 @@ const s = {
     margin: "0 0 8px",
   },
 
-  // No map
   noMap: {
     display: "flex",
     flexDirection: "column",
@@ -462,7 +411,6 @@ const s = {
   noMapTitle: { fontSize: 20, fontWeight: 700, color: "#4a5568", margin: "0 0 10px" },
   noMapDesc:  { fontSize: 14, color: "#a0aec0", lineHeight: 1.6 },
 
-  // Loading / error
   center: {
     flex: 1,
     display: "flex",
