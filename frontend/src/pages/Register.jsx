@@ -3,37 +3,18 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { register as registerApi } from "../services/authService";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Register.jsx — POST /api/auth/register
-//
-// Fields:
-//   - Full Name
-//   - Email Address
-//   - Password  (min 6 chars, with strength indicator)
-//   - Vehicle Number  (Indian format KA01AB1234 — optional)
-//
-// Same visual style as Login.jsx: white card on purple gradient.
-// ─────────────────────────────────────────────────────────────────────────────
-
 export default function Register() {
-  const [form,    setForm]    = useState({
-    name: "", email: "", password: "", vehicleNumber: "",
-  });
+  const [form,    setForm]    = useState({name: "", email: "", password: "", vehicleNumber: ""});
   const [errors,  setErrors]  = useState({});
   const [apiError, setApiError] = useState("");
   const [loading, setLoading] = useState(false);
-
   const { login } = useAuth();
   const navigate  = useNavigate();
-
-  // ── Field update ────────────────────────────────────────────────────
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
-    // Clear field error on change
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
-  // ── Client validation ───────────────────────────────────────────────
   const validate = () => {
     const e = {};
     if (!form.name.trim() || form.name.trim().length < 2)
@@ -47,7 +28,6 @@ export default function Register() {
     return e;
   };
 
-  // ── Submit ──────────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
     e.preventDefault();
     setApiError("");
@@ -61,9 +41,9 @@ export default function Register() {
     setLoading(true);
     try {
       const payload = {
-        name:          form.name.trim(),
-        email:         form.email.trim().toLowerCase(),
-        password:      form.password,
+        name: form.name.trim(),
+        email: form.email.trim().toLowerCase(),
+        password: form.password,
         vehicleNumber: form.vehicleNumber.toUpperCase() || undefined,
       };
       const data = await registerApi(payload);
@@ -80,12 +60,10 @@ export default function Register() {
     }
   };
 
-  // ── Password strength ───────────────────────────────────────────────
   const strength = passwordStrength(form.password);
 
   return (
     <div style={styles.root}>
-      {/* Navbar */}
       <nav style={styles.navbar}>
         <div style={styles.navLogo} onClick={() => navigate("/")}>
           <span>🚗</span>
@@ -98,21 +76,17 @@ export default function Register() {
         </div>
       </nav>
 
-      {/* Card */}
       <div style={styles.cardWrapper}>
         <div style={styles.card}>
           <h1 style={styles.title}>Create your account</h1>
           <p style={styles.subtitle}>
             Join DriveSafe AI and start earning rewards for safe driving.
           </p>
-
-          {/* API error */}
           {apiError && (
             <div style={styles.errorBanner}>⚠️ {apiError}</div>
           )}
 
           <div style={styles.form}>
-            {/* Name */}
             <Field
               label="Full Name"
               placeholder="Nishant Dahiya"
@@ -123,7 +97,6 @@ export default function Register() {
               autoComplete="name"
             />
 
-            {/* Email */}
             <Field
               label="Email Address"
               type="email"
@@ -135,7 +108,6 @@ export default function Register() {
               autoComplete="email"
             />
 
-            {/* Password */}
             <div style={styles.fieldWrap}>
               <Field
                 label="Password"
@@ -147,7 +119,6 @@ export default function Register() {
                 disabled={loading}
                 autoComplete="new-password"
               />
-              {/* Strength indicator */}
               {form.password.length > 0 && (
                 <div style={styles.strengthWrap}>
                   <div style={styles.strengthBar}>
@@ -166,14 +137,12 @@ export default function Register() {
               )}
             </div>
 
-            {/* Vehicle Number */}
             <div style={styles.fieldWrap}>
               <Field
                 label="Vehicle Number (optional)"
                 placeholder="KA01AB1234"
                 value={form.vehicleNumber}
                 onChange={(e) => {
-                  // Auto-uppercase as user types
                   handleChange("vehicleNumber")({
                     target: { value: e.target.value.toUpperCase() },
                   });
@@ -185,15 +154,11 @@ export default function Register() {
                 🇮🇳 Indian registration format — e.g. KA01AB1234, DL3CAF0001
               </p>
             </div>
-
-            {/* Terms note */}
             <p style={styles.terms}>
               By creating an account you agree to our{" "}
               <span style={styles.termsLink}>Terms of Service</span> and{" "}
               <span style={styles.termsLink}>Privacy Policy</span>.
             </p>
-
-            {/* Submit */}
             <button
               onClick={handleSubmit}
               style={loading ? styles.submitBtnDisabled : styles.submitBtn}
@@ -202,7 +167,6 @@ export default function Register() {
               {loading ? "Creating account…" : "🚗 Create DriveSafe Account"}
             </button>
           </div>
-
           <p style={styles.loginLink}>
             Already have an account?{" "}
             <Link to="/login" style={styles.link}>Sign in →</Link>
@@ -213,9 +177,6 @@ export default function Register() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// REUSABLE FIELD
-// ─────────────────────────────────────────────────────────────────────────────
 function Field({ label, type = "text", placeholder, value, onChange,
                  error, disabled, autoComplete }) {
   const [focused, setFocused] = useState(false);
@@ -270,28 +231,22 @@ const fieldStyles = {
   errorMsg: { color: "#e53e3e", fontSize: 12 },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// PASSWORD STRENGTH
-// ─────────────────────────────────────────────────────────────────────────────
 function passwordStrength(pwd) {
   if (!pwd)          return { pct: 0,   label: "",        color: "#e2e8f0" };
   if (pwd.length < 6) return { pct: 25,  label: "Weak",    color: "#fc8181" };
 
   let score = 0;
-  if (pwd.length >= 8)         score++;
-  if (/[A-Z]/.test(pwd))       score++;
-  if (/[0-9]/.test(pwd))       score++;
+  if (pwd.length >= 8)  score++;
+  if (/[A-Z]/.test(pwd)) score++;
+  if (/[0-9]/.test(pwd)) score++;
   if (/[^A-Za-z0-9]/.test(pwd)) score++;
 
   if (score <= 1) return { pct: 40,  label: "Fair",      color: "#f6ad55" };
   if (score === 2) return { pct: 65,  label: "Good",      color: "#68d391" };
   if (score === 3) return { pct: 85,  label: "Strong",    color: "#48bb78" };
-  return              { pct: 100, label: "Very strong", color: "#38a169" };
+  return { pct: 100, label: "Very strong", color: "#38a169" };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STYLES
-// ─────────────────────────────────────────────────────────────────────────────
 const styles = {
   root: {
     minHeight: "100vh",
