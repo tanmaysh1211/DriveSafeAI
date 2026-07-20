@@ -1,18 +1,3 @@
-/* ═══════════════════════════════════════════════════════════════════════════
-   index.css — DriveSafe AI Global Stylesheet
-   Imported once in main.jsx. All component styles use inline style objects,
-   so this file only covers:
-     1. CSS reset and base defaults
-     2. CSS custom properties (design tokens)
-     3. Keyframe animations referenced by inline styles
-     4. Leaflet map overrides (can't be done inline)
-     5. Utility classes for things inline styles can't do (::placeholder, etc.)
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   1. CSS RESET
-   ───────────────────────────────────────────────────────────────────────── */
 
 *,
 *::before,
