@@ -3,22 +3,6 @@ import { useNavigate, useLocation }     from "react-router-dom";
 import { useAuth }                      from "../context/AuthContext";
 import api                              from "../services/api";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Navbar.jsx — Global navigation bar
-//
-// Matches screenshots exactly:
-//   Left   : 🚗 DriveSafeAI logo
-//   Centre : 🏠 Home  📊 Dashboard  🗺️ Trip History  🛡️ Insurance
-//   Right  : 🔔 Notifications (badge)  ⭐ Points pill
-//            👋 Welcome, Nishant  |  Logout button
-//
-// Behaviour:
-//   - Hidden on /login and /register (those pages have inline navs)
-//   - Notification dropdown opens on bell click
-//   - Points pill updates in real time after trip upload / redemption
-//   - Active nav link gets a subtle underline indicator
-// ─────────────────────────────────────────────────────────────────────────────
-
 export default function Navbar() {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate  = useNavigate();
@@ -29,37 +13,7 @@ export default function Navbar() {
   const [notifOpen,      setNotifOpen]      = useState(false);
   const [notifLoading,   setNotifLoading]   = useState(false);
   const notifRef = useRef(null);
-
-  // ── Hide on auth pages ───────────────────────────────────────────
-  // const HIDE_ON = ["/login", "/register"];
-  // if (HIDE_ON.includes(location.pathname)) return null;
-
-  // // ── Close notification dropdown on outside click ─────────────────
-  // useEffect(() => {
-  //   const handler = (e) => {
-  //     if (notifRef.current && !notifRef.current.contains(e.target)) {
-  //       setNotifOpen(false);
-  //     }
-  //   };
-  //   document.addEventListener("mousedown", handler);
-  //   return () => document.removeEventListener("mousedown", handler);
-  // }, []);
-
-  // // ── Fetch unread count on mount ───────────────────────────────────
-  // useEffect(() => {
-  //   if (isAuthenticated && user?.userId) {
-  //     fetchUnreadCount();
-  //     // Poll every 60 seconds
-  //     const interval = setInterval(fetchUnreadCount, 60_000);
-  //     return () => clearInterval(interval);
-  //   }
-  // }, [isAuthenticated, user?.userId]);
-
-
-
-
-
-
+  
   const HIDE_ON = ["/login", "/register"];
 
 useEffect(() => {
@@ -91,7 +45,6 @@ if (HIDE_ON.includes(location.pathname)) {
       const res = await api.get(`/notifications/${user.userId}/unread-count`);
       setUnreadCount(res.data.unreadCount ?? 0);
     } catch {
-      // Silently ignore — notification count is non-critical
     }
   };
 
@@ -100,7 +53,6 @@ if (HIDE_ON.includes(location.pathname)) {
     try {
       const res = await api.get(`/notifications/${user.userId}?limit=10`);
       setNotifications(res.data ?? []);
-      // Mark all as read
       await api.put(`/notifications/${user.userId}/read-all`);
       setUnreadCount(0);
     } catch {
@@ -125,13 +77,11 @@ if (HIDE_ON.includes(location.pathname)) {
 
   return (
     <nav style={s.navbar}>
-      {/* ── Logo ─────────────────────────────────────────────────── */}
       <div style={s.logo} onClick={() => navigate("/")}>
         <span style={s.logoIcon}>🚗</span>
         <span style={s.logoText}>DriveSafeAI</span>
       </div>
 
-      {/* ── Nav links — only when authenticated ──────────────────── */}
       {isAuthenticated && (
         <div style={s.navLinks}>
           {NAV_LINKS.map((link) => (
@@ -145,7 +95,6 @@ if (HIDE_ON.includes(location.pathname)) {
         </div>
       )}
 
-      {/* ── Right side ───────────────────────────────────────────── */}
       <div style={s.navRight}>
         {isAuthenticated ? (
           <>
@@ -160,7 +109,6 @@ if (HIDE_ON.includes(location.pathname)) {
                 <span style={s.bellChevron}>▾</span>
               </button>
 
-              {/* Notification dropdown */}
               {notifOpen && (
                 <NotificationDropdown
                   notifications={notifications}
@@ -176,7 +124,6 @@ if (HIDE_ON.includes(location.pathname)) {
               )}
             </div>
 
-            {/* Points pill */}
             <div
               style={s.pointsPill}
               onClick={() => navigate("/rewards")}
@@ -186,7 +133,6 @@ if (HIDE_ON.includes(location.pathname)) {
               <span style={s.pointsNum}>{user?.totalPoints ?? 0}</span>
             </div>
 
-            {/* Welcome chip */}
             <div style={s.welcomeChip}>
               <span style={s.welcomeEmoji}>👋</span>
               <span style={s.welcomeText}>
@@ -194,7 +140,6 @@ if (HIDE_ON.includes(location.pathname)) {
               </span>
             </div>
 
-            {/* Logout */}
             <button style={s.logoutBtn} onClick={handleLogout}>
               Logout
             </button>
@@ -210,9 +155,6 @@ if (HIDE_ON.includes(location.pathname)) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// NAV LINK
-// ─────────────────────────────────────────────────────────────────────────────
 function NavLink({ link, active, onClick }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -233,9 +175,6 @@ function NavLink({ link, active, onClick }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// NOTIFICATION DROPDOWN
-// ─────────────────────────────────────────────────────────────────────────────
 function NotificationDropdown({ notifications, loading, onClose, onMarkRead }) {
   return (
     <div style={s.dropdown}>
@@ -267,9 +206,6 @@ function NotificationDropdown({ notifications, loading, onClose, onMarkRead }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// NOTIFICATION ITEM
-// ─────────────────────────────────────────────────────────────────────────────
 function NotifItem({ notif, onMarkRead }) {
   const [hovered, setHovered] = useState(false);
   const typeIcon = NOTIF_ICONS[notif.type] ?? "🔔";
@@ -307,9 +243,6 @@ function NotifItem({ notif, onMarkRead }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
 function formatTimeAgo(dateStr) {
   if (!dateStr) return "";
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -322,9 +255,6 @@ function formatTimeAgo(dateStr) {
   return `${days}d ago`;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DATA
-// ─────────────────────────────────────────────────────────────────────────────
 const NAV_LINKS = [
   { label: "Home",         path: "/",          icon: "🏠" },
   { label: "Dashboard",    path: "/dashboard", icon: "📊" },
@@ -341,9 +271,6 @@ const NOTIF_ICONS = {
   SYSTEM:            "🔔",
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STYLES — dark navbar matching screenshots exactly
-// ─────────────────────────────────────────────────────────────────────────────
 const s = {
   navbar: {
     display: "flex",
@@ -361,7 +288,6 @@ const s = {
     boxShadow: "0 2px 20px rgba(0,0,0,0.3)",
   },
 
-  // Logo
   logo: {
     display: "flex",
     alignItems: "center",
@@ -379,7 +305,6 @@ const s = {
     fontFamily: "'Segoe UI', system-ui, sans-serif",
   },
 
-  // Nav links
   navLinks: {
     display: "flex",
     alignItems: "center",
@@ -421,7 +346,6 @@ const s = {
     borderRadius: 99,
   },
 
-  // Right side
   navRight: {
     display: "flex",
     alignItems: "center",
@@ -430,7 +354,6 @@ const s = {
     flexShrink: 0,
   },
 
-  // Notification bell
   notifWrap: { position: "relative" },
   bellBtn: {
     display: "flex",
@@ -463,7 +386,6 @@ const s = {
     lineHeight: "16px",
   },
 
-  // Notification dropdown
   dropdown: {
     position: "absolute",
     top: "calc(100% + 8px)",
@@ -516,7 +438,6 @@ const s = {
   dropdownEmptyIcon: { fontSize: 32, margin: 0 },
   dropdownEmptyText: { fontSize: 13, color: "#a0aec0", margin: 0 },
 
-  // Notification item
   notifItem: {
     display: "flex",
     alignItems: "flex-start",
@@ -554,7 +475,6 @@ const s = {
     flexShrink: 0,
   },
 
-  // Points pill — gold pill matches screenshots
   pointsPill: {
     display: "flex",
     alignItems: "center",
@@ -572,7 +492,6 @@ const s = {
     color: "#1a202c",
   },
 
-  // Welcome chip
   welcomeChip: {
     display: "flex",
     alignItems: "center",
@@ -590,7 +509,6 @@ const s = {
     fontFamily: "'Segoe UI', system-ui, sans-serif",
   },
 
-  // Logout
   logoutBtn: {
     background: "transparent",
     border: "1.5px solid rgba(255,255,255,0.25)",
@@ -604,7 +522,6 @@ const s = {
     fontFamily: "'Segoe UI', system-ui, sans-serif",
   },
 
-  // Unauthenticated
   loginBtn: {
     background: "rgba(255,255,255,0.1)",
     border: "1px solid rgba(255,255,255,0.2)",
