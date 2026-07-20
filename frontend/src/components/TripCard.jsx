@@ -3,44 +3,19 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import RiskBadge from "./RiskBadge";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TripCard.jsx — Reusable trip card used in TripHistory and anywhere
-//               else trips are listed.
-//
-// Props:
-//   trip         — TripSummaryResponse | TripUploadResponse from backend
-//   index        — display number (1, 2, 3…)
-//   showMapBtn   — show "Show Detailed Map Analysis" button (default true)
-//   showAiBtn    — show "View AI Analysis" button (default true)
-//   onAiAnalysis — optional callback override; if omitted uses built-in modal
-//
-// Card states:
-//   Collapsed  → score pill + two stat boxes + action buttons
-//   Expanded   → + avg speed, max accel, hard braking, conditions
-//   AI Modal   → overlay with numbered recommendation bullets
-// ─────────────────────────────────────────────────────────────────────────────
-
-export default function TripCard({
-  trip,
-  index,
-  showMapBtn   = true,
-  showAiBtn    = true,
-  onAiAnalysis = null,
-}) {
+export default function TripCard({ trip,index,showMapBtn= true,showAiBtn    = true,onAiAnalysis = null}) 
+{
   const navigate = useNavigate();
-
   const [expanded,   setExpanded]   = useState(false);
   const [details,    setDetails]    = useState(null);
   const [detLoading, setDetLoading] = useState(false);
   const [aiModal,    setAiModal]    = useState(false);
   const [aiText,     setAiText]     = useState(trip.aiRecommendation ?? "");
   const [aiLoading,  setAiLoading]  = useState(false);
-
   const score      = trip.driveScore ?? trip.score ?? 0;
   const riskLevel  = trip.riskLevel  ?? getRiskLevel(score);
   const riskColor  = RISK_COLORS[riskLevel] ?? "#e53e3e";
 
-  // ── Toggle expanded details ──────────────────────────────────────
   const handleToggleDetails = async () => {
     if (!expanded && !details) {
       setDetLoading(true);
@@ -56,7 +31,6 @@ export default function TripCard({
     setExpanded((v) => !v);
   };
 
-  // ── AI Analysis ──────────────────────────────────────────────────
   const handleViewAI = async () => {
     if (onAiAnalysis) { onAiAnalysis(trip); return; }
     setAiModal(true);
@@ -78,7 +52,6 @@ export default function TripCard({
   return (
     <>
       <div style={cs.card}>
-        {/* ── Header ────────────────────────────────────────────── */}
         <div style={cs.cardHeader}>
           <h3 style={cs.cardTitle}>Trip {index}</h3>
           <span style={{
@@ -89,7 +62,6 @@ export default function TripCard({
           </span>
         </div>
 
-        {/* ── Score pill ────────────────────────────────────────── */}
         <div style={cs.scoreWrap}>
           <div style={{ ...cs.scorePill, background: riskColor }}>
             Score: {score?.toFixed(2) ?? "—"}
@@ -97,13 +69,11 @@ export default function TripCard({
           <p style={cs.scoreLabel}>Drive Score</p>
         </div>
 
-        {/* ── Stat boxes ────────────────────────────────────────── */}
         <div style={cs.statsGrid}>
           <StatBox value={trip.maxSpeed?.toFixed(0) ?? "—"}   unit="Max Speed (km/h)" color="#e53e3e" />
           <StatBox value={trip.distanceKm?.toFixed(3) ?? "—"} unit="Distance (km)"    color="#3182ce" />
         </div>
 
-        {/* ── Buttons ───────────────────────────────────────────── */}
         <Btn color="blue"   onClick={handleToggleDetails} disabled={detLoading}>
           {detLoading ? "Loading…" : expanded ? "📊 Hide Details ▲" : "📊 Show Details ▼"}
         </Btn>
@@ -120,7 +90,6 @@ export default function TripCard({
           </Btn>
         )}
 
-        {/* ── Expanded detail panel ─────────────────────────────── */}
         {expanded && (
           <div style={cs.detailPanel}>
             {detLoading ? (
@@ -165,8 +134,6 @@ export default function TripCard({
           </div>
         )}
       </div>
-
-      {/* ── AI Modal ──────────────────────────────────────────────── */}
       {aiModal && (
         <AiModal
           tripId={trip.tripId}
@@ -183,9 +150,6 @@ export default function TripCard({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AI MODAL
-// ─────────────────────────────────────────────────────────────────────────────
 function AiModal({ tripId, index, text, loading, score, riskLevel, riskColor, onClose }) {
   const lines = text ? text.split("\n").map((l) => l.trim()).filter(Boolean) : [];
 
@@ -200,7 +164,6 @@ function AiModal({ tripId, index, text, loading, score, riskLevel, riskColor, on
           <button style={cs.modalCloseX} onClick={onClose}>✕</button>
         </div>
 
-        {/* Score strip */}
         <div style={{ ...cs.scoreStrip, borderLeftColor: riskColor }}>
           <div style={cs.scoreStripLeft}>
             <span style={{ fontSize: 28, fontWeight: 800, color: riskColor }}>
@@ -211,7 +174,6 @@ function AiModal({ tripId, index, text, loading, score, riskLevel, riskColor, on
           <RiskBadge level={riskLevel} />
         </div>
 
-        {/* Recommendations */}
         <div style={cs.modalBody}>
           {loading ? (
             <div style={cs.modalLoading}>
@@ -240,9 +202,6 @@ function AiModal({ tripId, index, text, loading, score, riskLevel, riskColor, on
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SMALL COMPONENTS
-// ─────────────────────────────────────────────────────────────────────────────
 function StatBox({ value, unit, color }) {
   return (
     <div style={cs.statBox}>
@@ -287,9 +246,6 @@ function CondPill({ label, bg }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HELPERS & DATA
-// ─────────────────────────────────────────────────────────────────────────────
 function getRiskLevel(score) {
   if (score <= 40) return "Safe";
   if (score <= 65) return "Moderate";
@@ -304,9 +260,6 @@ const BTN_CFG = {
   purple: { bg: "linear-gradient(135deg,#553c9a,#b83280)", hover: "linear-gradient(135deg,#44337a,#97266d)" },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STYLES
-// ─────────────────────────────────────────────────────────────────────────────
 const cs = {
   card: {
     background: "#fff",
