@@ -1,9 +1,8 @@
 import os
 from flask import Flask, jsonify
 from flask_cors import CORS
-
-from routes.scoring        import scoring_bp,        load_model
-from routes.maps           import maps_bp
+from routes.scoring import scoring_bp,load_model
+from routes.maps import maps_bp
 from routes.recommendations import recommendations_bp
 from routes.simulate import simulate_bp
 
