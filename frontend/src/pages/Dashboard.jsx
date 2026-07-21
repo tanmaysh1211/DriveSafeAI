@@ -3,20 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Dashboard.jsx — Risk Scoring Dashboard
-//
-// Matches screenshots exactly:
-//   Top row  : DRISC Score card, Risk Level card, Trips Analyzed card
-//   Row 2    : Premium Impact card
-//   Bottom   : User profile card (left) + Risk Analysis card (right)
-//   Below    : Recommendations (3 cards)
-// ─────────────────────────────────────────────────────────────────────────────
-
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate  = useNavigate();
-
   const [data,    setData]    = useState(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState("");
@@ -43,12 +32,10 @@ export default function Dashboard() {
   if (loading) return <PageShell><LoadingSpinner /></PageShell>;
   if (error)   return <PageShell><ErrorBanner msg={error} /></PageShell>;
   if (!data)   return null;
-
   const riskColor = RISK_COLORS[data.riskLevel] ?? "#718096";
 
   return (
     <PageShell>
-      {/* ── Page header ──────────────────────────────────────────── */}
       <div style={s.pageHeader}>
         <div>
           <h1 style={s.pageTitle}>Risk Scoring Dashboard</h1>
@@ -65,9 +52,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── Top stat cards ────────────────────────────────────────── */}
       <div style={s.statsGrid}>
-        {/* DRISC Score */}
         <StatCard
           label="DRISC SCORE"
           icon="📊"
@@ -92,7 +77,6 @@ export default function Dashboard() {
           <p style={s.statMeta}>📝 Risk assessment</p>
         </StatCard>
 
-        {/* Risk Level */}
         <StatCard label="RISK LEVEL" icon="⚠️" iconBg="#fff3cd">
           <div style={{ ...s.statValue, color: riskColor }}>
             {data.riskLevel}
@@ -100,7 +84,6 @@ export default function Dashboard() {
           <p style={s.statMeta}>🛡️ Current status</p>
         </StatCard>
 
-        {/* Trips Analyzed */}
         <StatCard label="TRIPS ANALYZED" icon="🚗" iconBg="#e8f4fd">
           <div style={{ ...s.statValue, color: "#2d3748" }}>
             {data.tripsAnalyzed}
@@ -109,7 +92,6 @@ export default function Dashboard() {
         </StatCard>
       </div>
 
-      {/* ── Premium Impact ────────────────────────────────────────── */}
       <div style={s.premiumRow}>
         <StatCard label="PREMIUM IMPACT" icon="💰" iconBg="#e6ffed" wide>
           <div style={{ ...s.statValue, color: "#38a169", fontSize: 28 }}>
@@ -119,7 +101,6 @@ export default function Dashboard() {
         </StatCard>
       </div>
 
-      {/* ── Profile + Risk Analysis ───────────────────────────────── */}
       <div style={s.bottomGrid}>
         {/* User Profile card */}
         <div style={s.profileCard}>
@@ -134,7 +115,6 @@ export default function Dashboard() {
           <ProfileRow icon="🗺️" label="Total Trips"  value={`${data.tripsAnalyzed} trips`} />
         </div>
 
-        {/* Risk Analysis card */}
         <div style={s.riskCard}>
           <div style={s.riskCardHeader}>
             <h3 style={s.riskCardTitle}>Risk Analysis</h3>
@@ -166,7 +146,6 @@ export default function Dashboard() {
             <span style={s.scoreHint}>&nbsp;&nbsp;More trips needed for accuracy</span>
           </p>
 
-          {/* Risk Factors grid */}
           <p style={s.factorsLabel}>Risk Factors</p>
           <div style={s.factorsGrid}>
             {data.riskFactors && Object.entries(data.riskFactors).map(([factor, level]) => (
@@ -176,7 +155,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── Recommendations ───────────────────────────────────────── */}
       {data.recommendations?.length > 0 && (
         <div style={s.recsSection}>
           <h3 style={s.recsTitle}>Recommendations</h3>
@@ -190,10 +168,6 @@ export default function Dashboard() {
     </PageShell>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SUB-COMPONENTS
-// ─────────────────────────────────────────────────────────────────────────────
 
 function PageShell({ children }) {
   return (
@@ -272,21 +246,17 @@ function ErrorBanner({ msg }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DATA
-// ─────────────────────────────────────────────────────────────────────────────
-
 const RISK_COLORS = {
-  Safe:     "#38a169",
+  Safe: "#38a169",
   Moderate: "#d69e2e",
-  High:     "#e53e3e",
+  High: "#e53e3e",
 };
 
 const FACTOR_COLORS = {
-  Low:      { color: "#38a169", bg: "#e6ffed" },
-  Normal:   { color: "#3182ce", bg: "#ebf8ff" },
+  Low: { color: "#38a169", bg: "#e6ffed" },
+  Normal: { color: "#3182ce", bg: "#ebf8ff" },
   Moderate: { color: "#d69e2e", bg: "#fffff0" },
-  High:     { color: "#e53e3e", bg: "#fff5f5" },
+  High: { color: "#e53e3e", bg: "#fff5f5" },
 };
 
 const REC_STYLES = {
@@ -304,9 +274,6 @@ const REC_STYLES = {
   },
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STYLES
-// ─────────────────────────────────────────────────────────────────────────────
 const s = {
   root: {
     minHeight: "100vh",
@@ -319,7 +286,6 @@ const s = {
     padding: "32px 24px",
   },
 
-  // Page header
   pageHeader: {
     display: "flex",
     justifyContent: "space-between",
@@ -343,7 +309,6 @@ const s = {
     fontSize: 14, fontWeight: 500, color: "#4a5568",
   },
 
-  // Stat cards
   statsGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(3, 1fr)",
@@ -404,7 +369,6 @@ const s = {
     cursor: "pointer",
   },
 
-  // Bottom grid
   bottomGrid: {
     display: "grid",
     gridTemplateColumns: "280px 1fr",
@@ -412,7 +376,6 @@ const s = {
     marginBottom: 18,
   },
 
-  // Profile card
   profileCard: {
     background: "#fff",
     borderRadius: 14,
@@ -449,7 +412,6 @@ const s = {
   profileRowLabel: { fontSize: 13, color: "#718096", flex: 1 },
   profileRowValue: { fontSize: 13, fontWeight: 600, color: "#2d3748" },
 
-  // Risk Analysis card
   riskCard: {
     background: "#fff",
     borderRadius: 14,
@@ -497,7 +459,6 @@ const s = {
     fontSize: 12, fontWeight: 600,
   },
 
-  // Recommendations
   recsSection: { marginTop: 4 },
   recsTitle: { fontSize: 17, fontWeight: 700, color: "#1a202c", marginBottom: 16 },
   recsGrid: {
@@ -515,7 +476,6 @@ const s = {
   recType:   { fontWeight: 700, fontSize: 14 },
   recBody:   { fontSize: 13, color: "#4a5568", lineHeight: 1.6, margin: 0 },
 
-  // Loading / error
   loading: {
     display: "flex", flexDirection: "column",
     alignItems: "center", justifyContent: "center",
