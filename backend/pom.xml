@@ -6,10 +6,6 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         PARENT — Spring Boot BOM manages all dependency versions.
-         Upgrade Spring Boot version here and all compatible deps update.
-    ══════════════════════════════════════════════════════════════════════ -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
@@ -17,9 +13,6 @@
         <relativePath/>
     </parent>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         PROJECT IDENTITY
-    ══════════════════════════════════════════════════════════════════════ -->
     <groupId>com.drivesafe</groupId>
     <artifactId>drivesafe-ai</artifactId>
     <version>0.0.1-SNAPSHOT</version>
@@ -30,9 +23,6 @@
         real-time risk analysis, and smart insurance management.
     </description>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         PROPERTIES
-    ══════════════════════════════════════════════════════════════════════ -->
     <properties>
         <java.version>17</java.version>
         <jjwt.version>0.12.3</jjwt.version>
@@ -41,44 +31,32 @@
         <lombok.version>1.18.32</lombok.version>
     </properties>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         DEPENDENCIES
-    ══════════════════════════════════════════════════════════════════════ -->
     <dependencies>
-
-        <!-- ── Spring Boot Core ──────────────────────────────────────── -->
-
-        <!-- Web MVC: @RestController, @RequestMapping, RestTemplate -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- Spring Security: JWT filter chain, BCrypt, AuthenticationManager -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-        <!-- Spring Data JPA: repositories, @Entity, Hibernate ORM -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
-        <!-- Bean Validation: @Valid, @NotBlank, @Email on DTOs -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-        <!-- Actuator: /actuator/health endpoint for Docker health checks -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
-        <!-- DevTools: hot reload in IntelliJ during development -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
@@ -86,25 +64,18 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- ── Database ──────────────────────────────────────────────── -->
-
-        <!-- PostgreSQL JDBC driver — matches spring.datasource.url in properties -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
 
-        <!-- ── JWT (jjwt 0.12.x — modern API used in JwtUtil.java) ───── -->
-
-        <!-- jjwt-api: Jwts, Claims, JwtException interfaces -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
             <version>${jjwt.version}</version>
         </dependency>
 
-        <!-- jjwt-impl: DefaultJwtParser, signing key utilities (runtime only) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
@@ -112,7 +83,6 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- jjwt-jackson: JSON serialisation for JWT claims (runtime only) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
@@ -120,64 +90,41 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- ── Lombok ────────────────────────────────────────────────── -->
-
-        <!-- @Data, @Builder, @Slf4j, @RequiredArgsConstructor etc.
-             IntelliJ: install the Lombok plugin and enable annotation processing
-             Settings → Build → Compiler → Annotation Processors → Enable -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
 
-        <!-- ── ModelMapper ───────────────────────────────────────────── -->
-
-        <!-- Entity ↔ DTO mapping used in AppConfig.java
-             mapper.map(trip, TripSummaryResponse.class) -->
         <dependency>
             <groupId>org.modelmapper</groupId>
             <artifactId>modelmapper</artifactId>
             <version>${modelmapper.version}</version>
         </dependency>
 
-        <!-- ── OpenAPI / Swagger UI (optional but very useful) ───────── -->
-
-        <!-- Generates interactive API docs at http://localhost:8080/swagger-ui.html
-             Great for testing endpoints without Postman during development -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>${springdoc.version}</version>
         </dependency>
 
-        <!-- ── Jackson (JSON) ─────────────────────────────────────────── -->
-
-        <!-- Jackson Databind is included transitively by spring-boot-starter-web.
-             Adding datatype-jsr310 enables LocalDate/LocalDateTime serialisation
-             as ISO-8601 strings instead of arrays. -->
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
 
-        <!-- ── Testing ───────────────────────────────────────────────── -->
-
-        <!-- JUnit 5, Mockito, AssertJ, MockMvc — the full test stack -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
 
-        <!-- Spring Security Test: @WithMockUser, mockMvc security support -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
 
-        <!-- H2 in-memory DB for unit tests — no PostgreSQL needed in CI -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
@@ -186,20 +133,14 @@
 
     </dependencies>
 
-    <!-- ══════════════════════════════════════════════════════════════════
-         BUILD
-    ══════════════════════════════════════════════════════════════════════ -->
     <build>
         <plugins>
-
-            <!-- Spring Boot Maven Plugin — creates executable fat JAR
                  Run: mvn spring-boot:run
                  Build: mvn clean package → target/drivesafe-ai-0.0.1-SNAPSHOT.jar -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <!-- Exclude Lombok from the fat JAR (compile-time only) -->
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
@@ -209,14 +150,12 @@
                 </configuration>
             </plugin>
 
-            <!-- Maven Compiler Plugin — enforce Java 17 with annotation processing -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <source>17</source>
                     <target>17</target>
-                    <!-- Required for Lombok to generate code at compile time -->
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -226,8 +165,6 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
-
 </project>
