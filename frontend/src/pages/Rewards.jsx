@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react";
-import { useAuth }             from "../context/AuthContext";
-import api                     from "../services/api";
+import { useAuth } from "../context/AuthContext";
+import api from "../services/api";
 
 export default function Rewards() {
   const { user, updatePoints } = useAuth();
-  const [rewards,    setRewards]    = useState([]);
-  const [points,     setPoints]     = useState(0);
-  const [loading,    setLoading]    = useState(true);
-  const [error,      setError]      = useState("");
-  const [category,   setCategory]   = useState("All");
-  const [redeeming,  setRedeeming]  = useState(null);  
+  const [rewards, setRewards] = useState([]);
+  const [points, setPoints]  = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]  = useState("");
+  const [category, setCategory]  = useState("All");
+  const [redeeming, setRedeeming]  = useState(null);  
   const [redeemResult, setRedeemResult] = useState(null); 
-  const [history,    setHistory]    = useState([]);
+  const [history, setHistory]  = useState([]);
   const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
