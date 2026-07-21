@@ -3,29 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TripHistory.jsx — Trip listing page
-//
-// Matches screenshots:
-//   - Purple gradient background
-//   - Trip cards in 3-column grid
-//   - Each card: score pill (red), max speed + distance, 3 action buttons
-//   - "Show Details" expands: avg speed, max accel, trip conditions
-//   - "Show Detailed Map Analysis" → TripMap page
-//   - "View AI Analysis" → modal overlay
-//   - "Load Trips" button with number input
-// ─────────────────────────────────────────────────────────────────────────────
-
 export default function TripHistory() {
   const { user }  = useAuth();
   const navigate  = useNavigate();
-
-  const [trips,     setTrips]     = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [error,     setError]     = useState("");
-  const [limit,     setLimit]     = useState(10);
+  const [trips, setTrips] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [limit, setLimit] = useState(10);
   const [inputLimit, setInputLimit] = useState("10");
-  const [aiModal,   setAiModal]   = useState(null); // { tripId, text }
+  const [aiModal,   setAiModal] = useState(null); 
   const [uploading, setUploading] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState("average");
   const [uploadMsg, setUploadMsg] = useState("");
@@ -77,7 +63,7 @@ export default function TripHistory() {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setUploadMsg(
-        `✓ Trip uploaded! Score: ${res.data.driveScore?.toFixed(1)} · ${res.data.riskLevel} · +${res.data.pointsEarned} pts`
+        `Trip uploaded! Score: ${res.data.driveScore?.toFixed(1)} · ${res.data.riskLevel} · +${res.data.pointsEarned} pts`
       );
       fetchTrips(limit);
     } catch (e) {
@@ -92,15 +78,14 @@ export default function TripHistory() {
   setUploading(true);
   setUploadMsg("");
   try {
-    // Call a new backend endpoint that generates + processes a simulated trip
     const res = await api.post("/trips/simulate", {
-      profile: selectedProfile,  // "safe" | "average" | "aggressive"
+      profile: selectedProfile,  // safe | average | aggressive
       route: "bangalore_electronic_city"
     });
-    setUploadMsg(`✓ Trip simulated! Score: ${res.data.driveScore?.toFixed(1)} · ${res.data.riskLevel} · +${res.data.pointsEarned} pts`);
+    setUploadMsg(`Trip simulated! Score: ${res.data.driveScore?.toFixed(1)} · ${res.data.riskLevel} · +${res.data.pointsEarned} pts`);
     fetchTrips(limit);
   } catch (e) {
-    setUploadMsg("✗ Simulation failed");
+    setUploadMsg("Simulation failed");
   } finally {
     setUploading(false);
   }
@@ -121,7 +106,6 @@ export default function TripHistory() {
 
   return (
     <div style={s.root}>
-      {/* ── Upload bar ──────────────────────────────────────────── */}
       <div style={s.uploadBar}>
         <button
           style={s.uploadBtn}
@@ -171,7 +155,6 @@ export default function TripHistory() {
   </button>
 </div>
 
-      {/* ── Load controls ────────────────────────────────────────── */}
       <div style={s.controls}>
         <input
           type="number"
@@ -186,11 +169,9 @@ export default function TripHistory() {
         </button>
       </div>
 
-      {/* ── States ───────────────────────────────────────────────── */}
       {loading && <LoadingSpinner />}
       {error   && <ErrorBanner msg={error} />}
 
-      {/* ── Trip cards grid ──────────────────────────────────────── */}
       {!loading && !error && trips.length === 0 && (
         <EmptyState onUpload={() => fileRef.current?.click()} />
       )}
@@ -209,7 +190,6 @@ export default function TripHistory() {
         </div>
       )}
 
-      {/* ── AI Analysis modal ────────────────────────────────────── */}
       {aiModal && (
         <AiModal
           tripId={aiModal.tripId}
@@ -221,9 +201,6 @@ export default function TripHistory() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TRIP CARD
-// ─────────────────────────────────────────────────────────────────────────────
 function TripCard({ trip, index, onViewMap, onViewAI }) {
   const [expanded, setExpanded] = useState(false);
   const [details,  setDetails]  = useState(null);
@@ -238,7 +215,7 @@ function TripCard({ trip, index, onViewMap, onViewAI }) {
         const res = await api.get(`/trips/detail/${trip.tripId}`);
         setDetails(res.data);
       } catch {
-        setDetails(trip); // fall back to summary data
+        setDetails(trip); 
       } finally {
         setDetLoading(false);
       }
@@ -250,7 +227,6 @@ function TripCard({ trip, index, onViewMap, onViewAI }) {
 
   return (
     <div style={s.card}>
-      {/* Card header */}
       <div style={s.cardHeader}>
         <span style={s.cardTitle}>Trip {index}</span>
         <span style={{
@@ -261,7 +237,6 @@ function TripCard({ trip, index, onViewMap, onViewAI }) {
         </span>
       </div>
 
-      {/* Score pill */}
       <div style={s.scorePill}>
         <div style={{ ...s.scoreCircle, background: riskColor }}>
           Score: {trip.driveScore?.toFixed(2) ?? "—"}
@@ -269,7 +244,6 @@ function TripCard({ trip, index, onViewMap, onViewAI }) {
         <p style={s.scoreLabel}>Drive Score</p>
       </div>
 
-      {/* Stats row */}
       <div style={s.statsRow}>
         <div style={s.statBox}>
           <span style={{ ...s.statNum, color: "#e53e3e" }}>
@@ -285,7 +259,6 @@ function TripCard({ trip, index, onViewMap, onViewAI }) {
         </div>
       </div>
 
-      {/* Action buttons */}
       <button
         style={s.detailsBtn}
         onClick={handleToggleDetails}
@@ -303,7 +276,6 @@ function TripCard({ trip, index, onViewMap, onViewAI }) {
         🚗 View AI Analysis
       </button>
 
-      {/* Expanded details */}
       {expanded && (
         <div style={s.details}>
           {detLoading ? (
@@ -318,7 +290,6 @@ function TripCard({ trip, index, onViewMap, onViewAI }) {
               {d.sharpTurnCount !== undefined && (
                 <DetailRow label="Sharp Turns"  value={`${d.sharpTurnCount} events`}  color="#d69e2e" />
               )}
-              {/* Trip Conditions */}
               <p style={s.condLabel}>Trip Conditions:</p>
               <div style={s.condRow}>
                 {d.weatherCondition && (
@@ -350,9 +321,6 @@ function DetailRow({ label, value, color }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// AI MODAL
-// ─────────────────────────────────────────────────────────────────────────────
 function AiModal({ tripId, text, onClose }) {
   return (
     <div style={s.modalOverlay} onClick={onClose}>
@@ -406,19 +374,12 @@ function ErrorBanner({ msg }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DATA
-// ─────────────────────────────────────────────────────────────────────────────
-
 const RISK_COLORS = {
   Safe:     "#38a169",
   Moderate: "#d69e2e",
   High:     "#e53e3e",
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STYLES — purple gradient background matching screenshots
-// ─────────────────────────────────────────────────────────────────────────────
 const s = {
   root: {
     minHeight: "100vh",
@@ -427,14 +388,10 @@ const s = {
     padding: "24px",
   },
 
-  // Upload bar
   uploadBar: {
     display: "flex",
     alignItems: "center",
     gap: 18,
-    // marginBottom: 16,
-    // maxWidth: 1100,
-    // margin: "0 auto 16px",
     margin: "0 auto 28px",
     maxWidth: 1100,
   },
@@ -483,7 +440,7 @@ profileSelect: {
 
 selectArrow: {
   position: "absolute",
-  right: 16,      // ← Move this value
+  right: 16,      
   top: "30%",
   transform: "translateY(-50%)",
   pointerEvents: "none",
@@ -510,17 +467,12 @@ simulateBtn: {
   transition: "all .25s",
 },
 
-  // Load controls
   controls: {
     display: "flex",
     alignItems: "center",
-    // gap: 12,
-    // marginBottom: 24,
-    // maxWidth: 1100,
-    // margin: "0 auto 24px",
     gap: 18,
-  maxWidth: 1100,
-  margin: "0 auto 30px",
+    maxWidth: 1100,
+    margin: "0 auto 30px",
   },
   limitInput: {
     width: 80,
@@ -544,7 +496,6 @@ simulateBtn: {
     cursor: "pointer",
   },
 
-  // Grid
   grid: {
     display: "grid",
     gridTemplateColumns: "repeat(3, 1fr)",
@@ -553,7 +504,6 @@ simulateBtn: {
     margin: "0 auto",
   },
 
-  // Trip card — white card matching screenshots
   card: {
     background: "#fff",
     borderRadius: 16,
@@ -577,7 +527,6 @@ simulateBtn: {
     fontWeight: 600,
   },
 
-  // Score
   scorePill: { textAlign: "center" },
   scoreCircle: {
     display: "inline-block",
@@ -590,7 +539,6 @@ simulateBtn: {
   },
   scoreLabel: { fontSize: 12, color: "#718096", margin: 0 },
 
-  // Stats
   statsRow: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
@@ -603,7 +551,6 @@ simulateBtn: {
   statNum:  { fontSize: 22, fontWeight: 800 },
   statUnit: { fontSize: 11, color: "#718096", textAlign: "center" },
 
-  // Action buttons
   detailsBtn: {
     background: "linear-gradient(135deg, #3182ce, #2b6cb0)",
     border: "none", color: "#fff",
@@ -626,7 +573,6 @@ simulateBtn: {
     cursor: "pointer", width: "100%",
   },
 
-  // Expanded details
   details: {
     background: "#f7fafc",
     borderRadius: 10,
@@ -647,7 +593,6 @@ simulateBtn: {
     color: "#fff", fontSize: 12, fontWeight: 500,
   },
 
-  // AI Modal
   modalOverlay: {
     position: "fixed", inset: 0,
     background: "rgba(0,0,0,0.6)",
@@ -686,7 +631,6 @@ simulateBtn: {
   },
   modalBullet: { flexShrink: 0, fontSize: 16 },
 
-  // Empty state
   empty: {
     display: "flex", flexDirection: "column",
     alignItems: "center", justifyContent: "center",
@@ -703,7 +647,6 @@ simulateBtn: {
     fontWeight: 700, cursor: "pointer",
   },
 
-  // Loading / error
   center: {
     display: "flex", flexDirection: "column",
     alignItems: "center", justifyContent: "center",
