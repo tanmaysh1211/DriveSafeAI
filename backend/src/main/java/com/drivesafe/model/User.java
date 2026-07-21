@@ -5,7 +5,6 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,21 +14,19 @@ import java.util.List;
         name = "users",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = "email", name = "uk_users_email")
-        }
-)
+        })
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"trips"}) // avoid infinite loop in logs
+@ToString(exclude = {"trips"}) 
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ── Identity ──────────────────────────────────────────────────────
     @NotBlank(message = "Name is required")
     @Size(min = 2, max = 100)
     @Column(nullable = false, length = 100)
@@ -40,37 +37,27 @@ public class User {
     @Column(nullable = false, unique = true, length = 150)
     private String email;
 
-    // Stored as bcrypt hash — never store plain text
     @NotBlank(message = "Password is required")
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
-    // ── Vehicle ───────────────────────────────────────────────────────
-    // Indian vehicle registration format e.g. KA01AB1234
     @Column(name = "vehicle_number", length = 20)
     private String vehicleNumber;
 
-    // ── Gamification ──────────────────────────────────────────────────
-    // Denormalised points total — also stored in UserPoints table for history
     @Column(name = "total_points", nullable = false)
     @Builder.Default
     private int totalPoints = 0;
 
-    // ── Role ──────────────────────────────────────────────────────────
-    // ROLE_USER or ROLE_ADMIN — used by Spring Security
     @Column(nullable = false, length = 20)
     @Builder.Default
     private String role = "ROLE_USER";
 
-    // ── Timestamps ────────────────────────────────────────────────────
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // ── Relationships ─────────────────────────────────────────────────
-    // One user → many trips (lazy loaded — don't fetch unless needed)
     @OneToMany(
             mappedBy = "user",
             cascade = CascadeType.ALL,
@@ -80,7 +67,6 @@ public class User {
     @Builder.Default
     private List<Trip> trips = new ArrayList<>();
 
-    // One user → one insurance policy
     @OneToOne(
             mappedBy = "user",
             cascade = CascadeType.ALL,
@@ -88,7 +74,6 @@ public class User {
     )
     private Insurance insurance;
 
-    // ── Lifecycle hooks ───────────────────────────────────────────────
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -100,7 +85,6 @@ public class User {
         updatedAt = LocalDateTime.now();
     }
 
-    // ── Convenience helpers ───────────────────────────────────────────
     public void addTrip(Trip trip) {
         trips.add(trip);
         trip.setUser(this);
