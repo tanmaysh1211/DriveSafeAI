@@ -17,7 +17,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -32,14 +31,11 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final TripService tripService;
 
-    // POST /api/auth/register
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            return ResponseEntity
-                    .status(HttpStatus.CONFLICT)
-                    .body(Map.of("message", "Email already registered"));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "Email already registered"));
         }
 
         User user = new User();
@@ -50,7 +46,6 @@ public class AuthController {
         user.setCreatedAt(LocalDateTime.now());
 
         User saved = userRepository.save(user);
-        // After userRepository.save(newUser):
         tripService.seedSampleTrips(saved);
 
         String token = jwtUtil.generateToken(saved.getEmail(), saved.getId());
@@ -67,21 +62,16 @@ public class AuthController {
         );
     }
 
-    // POST /api/auth/login
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
 
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getEmail(),
-                            request.getPassword()
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()
                     )
             );
 
-            User user = userRepository.findByEmail(request.getEmail())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-
+            User user = userRepository.findByEmail(request.getEmail()).orElseThrow(() -> new RuntimeException("User not found"));
             String token = jwtUtil.generateToken(user.getEmail(), user.getId());
 
             return ResponseEntity.ok(
@@ -96,18 +86,14 @@ public class AuthController {
             );
 
         } catch (BadCredentialsException e) {
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "Invalid email or password"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid email or password"));
         }
     }
 
-    // GET /api/auth/me  — returns current user from JWT
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(Authentication authentication) {
         String email = authentication.getName();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
 
         return ResponseEntity.ok(
                 AuthResponse.builder()
