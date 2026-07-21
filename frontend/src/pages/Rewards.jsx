@@ -2,28 +2,15 @@ import { useState, useEffect } from "react";
 import { useAuth }             from "../context/AuthContext";
 import api                     from "../services/api";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Rewards.jsx — Rewards Store
-//
-// Matches screenshots exactly:
-//   Header : "Rewards Store" + subtitle + "90 Points" pill top-right
-//   Title  : "Popular Rewards" + subtitle
-//   Grid   : 3-column cards — emoji, name, description, value, points cost
-//   Card   : "Insufficient Points" grey button or active "Redeem" button
-//   Brands : Burger King, Indian Oil, Swiggy, Amazon, Netflix, Spotify, Zomato
-//   Filter : category tabs (All / Food / Fuel / Shopping / Entertainment)
-// ─────────────────────────────────────────────────────────────────────────────
-
 export default function Rewards() {
   const { user, updatePoints } = useAuth();
-
   const [rewards,    setRewards]    = useState([]);
   const [points,     setPoints]     = useState(0);
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState("");
   const [category,   setCategory]   = useState("All");
-  const [redeeming,  setRedeeming]  = useState(null);  // rewardId being redeemed
-  const [redeemResult, setRedeemResult] = useState(null); // modal data
+  const [redeeming,  setRedeeming]  = useState(null);  
+  const [redeemResult, setRedeemResult] = useState(null); 
   const [history,    setHistory]    = useState([]);
   const [showHistory, setShowHistory] = useState(false);
 
@@ -79,15 +66,11 @@ export default function Rewards() {
     }
   };
 
-  // Filter rewards by selected category
   const categories   = ["All", ...new Set(rewards.map((r) => r.category))];
-  const filteredList = category === "All"
-    ? rewards
-    : rewards.filter((r) => r.category?.toLowerCase() === category.toLowerCase());
+  const filteredList = category === "All" ? rewards : rewards.filter((r) => r.category?.toLowerCase() === category.toLowerCase());
 
   return (
     <div style={s.root}>
-      {/* ── Rewards Store header — matches screenshot ────────────── */}
       <div style={s.storeHeader}>
         <div style={s.storeHeaderLeft}>
           <span style={s.storeHeaderIcon}>🎁</span>
@@ -101,7 +84,6 @@ export default function Rewards() {
         </div>
       </div>
 
-      {/* ── Category tabs ─────────────────────────────────────────── */}
       <div style={s.tabs}>
         {categories.map((cat) => (
           <button
@@ -117,18 +99,15 @@ export default function Rewards() {
         </button>
       </div>
 
-      {/* ── Page title ────────────────────────────────────────────── */}
       <div style={s.storeBody}>
         <h1 style={s.storeTitle}>Popular Rewards</h1>
         <p style={s.storeSub}>
           Choose from our selection of premium rewards and offers
         </p>
 
-        {/* ── States ──────────────────────────────────────────────── */}
         {loading && <Spinner />}
         {error   && <ErrorBanner msg={error} />}
 
-        {/* ── Reward grid ───────────────────────────────────────────── */}
         {!loading && !error && (
           filteredList.length === 0 ? (
             <EmptyCategory category={category} />
@@ -147,7 +126,6 @@ export default function Rewards() {
           )
         )}
 
-        {/* ── Points earning guide ──────────────────────────────────── */}
         <div style={s.earningGuide}>
           <h3 style={s.guideTitle}>💡 How to earn more points</h3>
           <div style={s.guideGrid}>
@@ -164,7 +142,6 @@ export default function Rewards() {
         </div>
       </div>
 
-      {/* ── Redemption success / error modal ─────────────────────── */}
       {redeemResult && (
         <RedeemModal
           result={redeemResult}
@@ -172,7 +149,6 @@ export default function Rewards() {
         />
       )}
 
-      {/* ── Redemption history modal ──────────────────────────────── */}
       {showHistory && (
         <HistoryModal
           history={history}
@@ -183,9 +159,6 @@ export default function Rewards() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// REWARD CARD — matches screenshots exactly
-// ─────────────────────────────────────────────────────────────────────────────
 function RewardCard({ reward, userPoints, isRedeeming, onRedeem }) {
   const canAfford  = userPoints >= reward.pointsCost;
   const isDisabled = !canAfford || isRedeeming;
@@ -195,27 +168,22 @@ function RewardCard({ reward, userPoints, isRedeeming, onRedeem }) {
       ...s.rewardCard,
       opacity: canAfford ? 1 : 0.75,
     }}>
-      {/* Brand emoji */}
       <div style={s.rewardEmoji}>
         {reward.emoji ?? BRAND_EMOJIS[reward.name] ?? "🎁"}
       </div>
 
-      {/* Name + description */}
       <h3 style={s.rewardName}>{reward.name}</h3>
       <p style={s.rewardDesc}>{reward.description}</p>
 
-      {/* Value */}
       <p style={s.rewardValue}>
         ₹{reward.value?.toLocaleString("en-IN") ?? "—"}
         <span style={s.rewardValueLabel}> value</span>
       </p>
 
-      {/* Points cost */}
       <p style={s.rewardPoints}>
         ⭐ {reward.pointsCost?.toLocaleString("en-IN") ?? "—"} points
       </p>
 
-      {/* CTA button */}
       <button
         style={isDisabled ? s.insufficientBtn : s.redeemBtn}
         onClick={isDisabled ? undefined : onRedeem}
@@ -228,7 +196,6 @@ function RewardCard({ reward, userPoints, isRedeeming, onRedeem }) {
             : "+ Insufficient Points"}
       </button>
 
-      {/* Progress bar showing how close user is */}
       {!canAfford && (
         <div style={s.progressWrap}>
           <div style={s.progressBar}>
@@ -248,9 +215,6 @@ function RewardCard({ reward, userPoints, isRedeeming, onRedeem }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// REDEEM SUCCESS/ERROR MODAL
-// ─────────────────────────────────────────────────────────────────────────────
 function RedeemModal({ result, onClose }) {
   const isError = !!result.error;
   return (
@@ -297,16 +261,12 @@ function RedeemModal({ result, onClose }) {
             </div>
           </div>
         )}
-
         <button style={s.modalDoneBtn} onClick={onClose}>Done</button>
       </div>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HISTORY MODAL
-// ─────────────────────────────────────────────────────────────────────────────
 function HistoryModal({ history, onClose }) {
   return (
     <div style={s.overlay} onClick={onClose}>
@@ -344,10 +304,6 @@ function HistoryModal({ history, onClose }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SMALL COMPONENTS
-// ─────────────────────────────────────────────────────────────────────────────
-
 function Spinner() {
   return (
     <div style={s.center}>
@@ -376,27 +332,22 @@ function EmptyCategory({ category }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DATA
-// ─────────────────────────────────────────────────────────────────────────────
-
 const CAT_ICONS = {
-  All:           "🏷️",
-  food:          "🍽️",
-  fuel:          "⛽",
-  shopping:      "🛍️",
+  All: "🏷️",
+  food: "🍽️",
+  fuel: "⛽",
+  shopping: "🛍️",
   entertainment: "🎬",
 };
 
-// Fallback emojis if the backend doesn't supply them
 const BRAND_EMOJIS = {
   "Burger King": "🍔",
   "Indian Oil":  "⛽",
-  "Swiggy":      "🍽️",
-  "Amazon":      "📦",
-  "Netflix":     "🎬",
-  "Spotify":     "🎵",
-  "Zomato":      "🍕",
+  "Swiggy": "🍽️",
+  "Amazon": "📦",
+  "Netflix": "🎬",
+  "Spotify": "🎵",
+  "Zomato": "🍕",
 };
 
 const EARNING_GUIDE = [
@@ -405,9 +356,6 @@ const EARNING_GUIDE = [
   { emoji: "🔴", label: "High-risk trip (score > 65)", points: "+10 points" },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STYLES — matches the purple/blue gradient from screenshots
-// ─────────────────────────────────────────────────────────────────────────────
 const s = {
   root: {
     minHeight: "100vh",
@@ -415,7 +363,6 @@ const s = {
     fontFamily: "'Segoe UI', system-ui, sans-serif",
   },
 
-  // Store header — top strip matching screenshot
   storeHeader: {
     display: "flex",
     justifyContent: "space-between",
@@ -443,7 +390,6 @@ const s = {
     fontWeight: 700,
   },
 
-  // Category tabs
   tabs: {
     display: "flex",
     alignItems: "center",
@@ -473,7 +419,6 @@ const s = {
     cursor: "pointer", marginLeft: "auto",
   },
 
-  // Store body
   storeBody: {
     maxWidth: 1100,
     margin: "0 auto",
@@ -488,14 +433,12 @@ const s = {
     textAlign: "center", margin: "0 0 32px",
   },
 
-  // Reward grid — 3 columns matching screenshots
   grid: {
     display: "grid",
     gridTemplateColumns: "repeat(3, 1fr)",
     gap: 20,
   },
 
-  // Reward card — matches screenshots exactly
   rewardCard: {
     background: "rgba(255,255,255,0.12)",
     backdropFilter: "blur(8px)",
@@ -519,7 +462,6 @@ const s = {
     fontWeight: 600, margin: 0,
   },
 
-  // Insufficient points button — grey, matches screenshot
   insufficientBtn: {
     background: "rgba(255,255,255,0.08)",
     border: "1px solid rgba(255,255,255,0.15)",
@@ -529,7 +471,6 @@ const s = {
     marginTop: 4,
   },
 
-  // Redeem button — active, purple
   redeemBtn: {
     background: "linear-gradient(135deg, #553c9a, #b83280)",
     border: "none", borderRadius: 8, padding: "10px",
@@ -538,7 +479,6 @@ const s = {
     boxShadow: "0 4px 12px rgba(85,60,154,0.35)",
   },
 
-  // Progress bar for partially affordable rewards
   progressWrap: { marginTop: 4 },
   progressBar: {
     height: 4, background: "rgba(255,255,255,0.15)",
@@ -553,7 +493,6 @@ const s = {
     fontSize: 11, color: "rgba(255,255,255,0.5)", margin: 0,
   },
 
-  // Earning guide
   earningGuide: {
     background: "rgba(255,255,255,0.08)",
     borderRadius: 16, padding: "24px",
@@ -580,7 +519,6 @@ const s = {
   guideLabel:  { fontSize: 13, color: "rgba(255,255,255,0.8)", margin: "0 0 3px" },
   guidePoints: { fontSize: 15, fontWeight: 700, color: "#f6ad55", margin: 0 },
 
-  // Redeem success modal
   overlay: {
     position: "fixed", inset: 0,
     background: "rgba(0,0,0,0.65)",
@@ -645,7 +583,6 @@ const s = {
     marginTop: 20,
   },
 
-  // History modal
   historyList:  { display: "flex", flexDirection: "column", gap: 10, maxHeight: 400, overflowY: "auto" },
   historyItem: {
     display: "flex", justifyContent: "space-between",
@@ -659,7 +596,6 @@ const s = {
   historyCode:  { fontSize: 12, fontWeight: 700, color: "#553c9a", fontFamily: "monospace", margin: 0 },
   historyPoints:{ fontSize: 13, fontWeight: 700, color: "#e53e3e", margin: 0 },
 
-  // Loading / error
   center: {
     display: "flex", flexDirection: "column",
     alignItems: "center", justifyContent: "center",
