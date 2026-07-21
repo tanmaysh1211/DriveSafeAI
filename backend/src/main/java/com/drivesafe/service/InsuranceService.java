@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
@@ -24,28 +23,20 @@ public class InsuranceService {
     private final DriscScoringService driscScoringService;
     private final UserRepository userRepository;
 
-    // ─────────────────────────────────────────────────────────────────
-    // GET INSURANCE — full policy details for the Insurance page
-    // Recalculates final premium live using the latest DRISC score
-    // ─────────────────────────────────────────────────────────────────
     public InsuranceResponse getInsuranceForUser(Long userId) {
-        Insurance policy = insuranceRepository.findByUserId(userId)
-                .orElse(null);
+        Insurance policy = insuranceRepository.findByUserId(userId).orElse(null);
 
         if (policy == null) return null;
 
-        // Always recalculate final premium using the freshest DRISC score
         double driscScore = driscScoringService.getLatestDriscScore(userId);
         double discountPct = discountFromDrisc(driscScore);
         double finalPremium = policy.getBasePremium() * (1.0 - discountPct / 100.0);
 
-        // Persist updated final premium
         policy.setFinalPremium(finalPremium);
         insuranceRepository.save(policy);
 
         long daysRemaining = ChronoUnit.DAYS.between(LocalDate.now(), policy.getEndDate());
-        String policyStatus = daysRemaining > 30 ? "ACTIVE"
-                : daysRemaining > 0 ? "EXPIRING_SOON" : "EXPIRED";
+        String policyStatus = daysRemaining > 30 ? "ACTIVE" : daysRemaining > 0 ? "EXPIRING_SOON" : "EXPIRED";
 
         return InsuranceResponse.builder()
                 .policyId(policy.getId())
@@ -64,13 +55,8 @@ public class InsuranceService {
                 .build();
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // PREMIUM BREAKDOWN — used by the Financial Details card
-    // Returns itemised breakdown: base → discount → final
-    // ─────────────────────────────────────────────────────────────────
     public Map<String, Object> getPremiumBreakdown(Long userId) {
-        Insurance policy = insuranceRepository.findByUserId(userId)
-                .orElseThrow(() -> new NoSuchElementException("No policy found"));
+        Insurance policy = insuranceRepository.findByUserId(userId).orElseThrow(() -> new NoSuchElementException("No policy found"));
 
         double driscScore   = driscScoringService.getLatestDriscScore(userId);
         double discountPct  = discountFromDrisc(driscScore);
@@ -87,69 +73,34 @@ public class InsuranceService {
         return breakdown;
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // DAYS REMAINING until policy expires
-    // ─────────────────────────────────────────────────────────────────
     public long getDaysRemaining(Long userId) {
-        return insuranceRepository.findByUserId(userId)
-                .map(p -> ChronoUnit.DAYS.between(LocalDate.now(), p.getEndDate()))
-                .orElse(0L);
+        return insuranceRepository.findByUserId(userId).map(p -> ChronoUnit.DAYS.between(LocalDate.now(), p.getEndDate())).orElse(0L);
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // RENEW POLICY — extends end date by 1 year, recalculates premium
-    // ─────────────────────────────────────────────────────────────────
     @Transactional
     public InsuranceResponse renewPolicy(Long policyId, String email) {
-        Insurance policy = insuranceRepository.findById(policyId)
-                .orElseThrow(() -> new NoSuchElementException("Policy not found: " + policyId));
+        Insurance policy = insuranceRepository.findById(policyId).orElseThrow(() -> new NoSuchElementException("Policy not found: " + policyId));
 
-        // Security: verify caller owns the policy
         if (!policy.getUser().getEmail().equals(email)) {
             throw new SecurityException("Not authorized to renew this policy");
         }
 
-        // Extend from today or from current end date (whichever is later)
-        LocalDate newStart = LocalDate.now().isAfter(policy.getEndDate())
-                ? LocalDate.now() : policy.getEndDate();
+        LocalDate newStart = LocalDate.now().isAfter(policy.getEndDate()) ? LocalDate.now() : policy.getEndDate();
         policy.setStartDate(newStart);
         policy.setEndDate(newStart.plusYears(1));
-
-        // Recalculate premium with latest DRISC
-        double driscScore   = driscScoringService.getLatestDriscScore(policy.getUser().getId());
-        double discountPct  = discountFromDrisc(driscScore);
+        double driscScore = driscScoringService.getLatestDriscScore(policy.getUser().getId());
+        double discountPct = discountFromDrisc(driscScore);
         policy.setFinalPremium(policy.getBasePremium() * (1.0 - discountPct / 100.0));
-
         insuranceRepository.save(policy);
-        log.info("Policy {} renewed for user {} until {}",
-                policyId, email, policy.getEndDate());
+        log.info("Policy {} renewed for user {} until {}", policyId, email, policy.getEndDate());
 
         return getInsuranceForUser(policy.getUser().getId());
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // OWNERSHIP CHECK
-    // ─────────────────────────────────────────────────────────────────
     public boolean isOwner(Long userId, String email) {
-        return userRepository.findByEmail(email)
-                .map(u -> u.getId().equals(userId))
-                .orElse(false);
+        return userRepository.findByEmail(email).map(u -> u.getId().equals(userId)).orElse(false);
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // DISCOUNT CALCULATION from DRISC score
-    //
-    // DRISC score is 0–100, higher = riskier.
-    // Safer drivers (lower DRISC) get higher discount:
-    //
-    //   0–30  (Excellent) → 15% discount
-    //  31–50  (Good)      → 10% discount
-    //  51–65  (Moderate)  →  5% discount
-    //  66–80  (High)      →  2% discount
-    //  81–100 (Very High) →  0% discount
-    //
-    // This is the B2B insurance pricing logic — key differentiator.
-    // ─────────────────────────────────────────────────────────────────
     public double discountFromDrisc(double driscScore) {
         if (driscScore <= 30) return 15.0;
         if (driscScore <= 50) return 10.0;
