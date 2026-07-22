@@ -257,19 +257,6 @@ Open **4 terminals simultaneously:**
 | React | `cd frontend && npm run dev` | :5173 |
 | OBD Simulator | `python simulate_trip.py --profile aggressive` | — |
  
----
- 
-## 📸 Screenshots
- 
-| Dashboard | Trip History | Insurance |
-|---|---|---|
-| DRISC score, risk factors, recommendations | Trip cards with map + AI analysis | Premium breakdown, DRISC gauge |
- 
-| Route Map | Risk Heatmap | Rewards Store |
-|---|---|---|
-| Green/orange/red route segments | Heat concentration by risk | 7 redeemable brands |
- 
----
 
 ---
 
