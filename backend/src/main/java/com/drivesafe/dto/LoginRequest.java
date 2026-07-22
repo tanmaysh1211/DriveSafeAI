@@ -5,17 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// LoginRequest — body of POST /api/auth/login
-//
-// JSON shape the React Login.jsx sends:
-// {
-//   "email":    "nishant12@example.com",
-//   "password": "mypassword"
-// }
-//
-// Validated by @Valid in AuthController before Spring even calls the method.
-// ─────────────────────────────────────────────────────────────────────────────
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
